@@ -166,7 +166,38 @@
     <if=skillUsers.length>
       <div class="users-grid">
         <for|user| of=skillUsers>
-          <user-card user=user isAdmin=isAdmin/>
+          <const/matched=(user.skills as any[]).find((sk: any) => sk.name === activeSkill)>
+          <div class="activity-card">
+            <h3 class="user-name">${user.name}</h3>
+            <if=matched>
+              <div class="activity-opts">
+                <if=matched.learning>
+                  <div class="opt-row">
+                    <span class="opt-label">${t("skills.learning")}</span>
+                    <if=matched.learning_note>
+                      <p class="opt-note">${matched.learning_note}</p>
+                    </if>
+                  </div>
+                </if>
+                <if=matched.teaching>
+                  <div class="opt-row">
+                    <span class="opt-label">${t("skills.teaching")}</span>
+                    <if=matched.teaching_note>
+                      <p class="opt-note">${matched.teaching_note}</p>
+                    </if>
+                  </div>
+                </if>
+                <if=matched.doing>
+                  <div class="opt-row">
+                    <span class="opt-label">${t("skills.doing")}</span>
+                    <if=matched.doing_note>
+                      <p class="opt-note">${matched.doing_note}</p>
+                    </if>
+                  </div>
+                </if>
+              </div>
+            </if>
+          </div>
         </for>
       </div>
     </if>
@@ -347,11 +378,66 @@
     font-weight: 500;
   }
 
-  /* ── User cards grid ─────────────────────────────────────────── */
+  /* ── Activity user cards ─────────────────────────────────────── */
   .users-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .activity-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .activity-card:hover {
+    border-color: var(--accent);
+    background: var(--surface-hover);
+  }
+
+  .user-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .activity-opts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .opt-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .opt-label {
+    display: inline-block;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    align-self: flex-start;
+  }
+
+  .opt-note {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+    padding-left: 0.25rem;
   }
 
   /* ── Empty / no-results state ────────────────────────────────── */
