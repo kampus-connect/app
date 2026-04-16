@@ -1,0 +1,653 @@
+<const/tr=($global as any).translations ?? {}>
+<const/t=(key: string, params?: Record<string, string>): string => {
+  const dot = key.indexOf(".");
+  const s = key.slice(0, dot);
+  const k = key.slice(dot + 1);
+  let v: string = (tr[s] as Record<string, string>)?.[k] ?? key;
+  if (params) for (const [p, r] of Object.entries(params)) v = v.replaceAll(`{${p}}`, r);
+  return v;
+}>
+
+<const/user=($global as any).currentUser>
+
+<!-- ── Personal info state ────────────────────────────────────────── -->
+<let/infoName=(user?.name ?? "") as string>
+<let/infoEmail=(user?.email ?? "") as string>
+<let/infoLoading=false>
+<let/infoError="" as string>
+<let/infoSuccess=false>
+
+<!-- ── Password state ───────────────────────────────────────────── -->
+<let/currentPw="" as string>
+<let/newPw="" as string>
+<let/confirmPw="" as string>
+<let/pwLoading=false>
+<let/pwError="" as string>
+<let/pwSuccess=false>
+
+<!-- ── Skills state ──────────────────────────────────────────────── -->
+<let/skills=(user?.skills ?? []) as { id: number; name: string; level: string }[]>
+<let/editingId=(null as number | null)>
+<let/editName="" as string>
+<let/editLevel="Beginner" as string>
+<let/addingSkill=false>
+<let/newSkillName="" as string>
+<let/newSkillLevel="Beginner" as string>
+<let/skillError="" as string>
+
+<!-- ── Helpers ───────────────────────────────────────────────────── -->
+<const/showInfoSuccess=() => {
+  infoSuccess = true;
+  setTimeout(() => { infoSuccess = false; }, 3000);
+}>
+
+<const/showPwSuccess=() => {
+  pwSuccess = true;
+  setTimeout(() => { pwSuccess = false; }, 3000);
+}>
+
+<const/levelColor={
+  Beginner:     "var(--skill-beginner)",
+  Intermediate: "var(--skill-intermediate)",
+  Advanced:     "var(--skill-advanced)",
+}>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <header class="page-header">
+    <h1>${t("profile.title")}</h1>
+  </header>
+
+  <!-- ── Personal Information ──────────────────────────────────── -->
+  <section class="card">
+    <h2 class="section-title">${t("profile.personalInfo")}</h2>
+
+    <form
+      class="form"
+      onSubmit(e) {
+        e.preventDefault();
+        infoLoading = true;
+        infoError = "";
+        fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: infoName.trim(), email: infoEmail.trim() }),
+        })
+          .then((r) => r.json())
+          .then((d: any) => {
+            infoLoading = false;
+            if (d.error) {
+              infoError = d.error === "Email already in use"
+                ? t("profile.emailTaken")
+                : d.error;
+            } else {
+              showInfoSuccess();
+            }
+          })
+          .catch(() => {
+            infoError = t("profile.error");
+            infoLoading = false;
+          });
+      }
+    >
+      <if=infoError>
+        <div class="error-banner">${infoError}</div>
+      </if>
+      <if=infoSuccess>
+        <div class="success-banner">${t("profile.infoSaved")}</div>
+      </if>
+
+      <div class="field">
+        <label for="info-name">${t("profile.name")}</label>
+        <input
+          id="info-name"
+          type="text"
+          required
+          value=infoName
+          onInput(e) { infoName = (e.target as HTMLInputElement).value; }
+        />
+      </div>
+
+      <div class="field">
+        <label for="info-email">${t("profile.email")}</label>
+        <input
+          id="info-email"
+          type="email"
+          required
+          value=infoEmail
+          onInput(e) { infoEmail = (e.target as HTMLInputElement).value; }
+        />
+      </div>
+
+      <div class="form-footer">
+        <button type="submit" class="btn-primary" disabled=infoLoading>
+          ${infoLoading ? t("profile.saving") : t("profile.saveInfo")}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ── Change Password ───────────────────────────────────────── -->
+  <section class="card">
+    <h2 class="section-title">${t("profile.changePassword")}</h2>
+
+    <form
+      class="form"
+      onSubmit(e) {
+        e.preventDefault();
+        if (newPw !== confirmPw) { pwError = t("profile.passwordMismatch"); return; }
+        if (newPw.length < 6) { pwError = t("profile.passwordTooShort"); return; }
+        pwLoading = true;
+        pwError = "";
+        fetch("/api/profile/password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
+        })
+          .then((r) => r.json())
+          .then((d: any) => {
+            pwLoading = false;
+            if (d.error) {
+              pwError = d.error === "Current password is incorrect"
+                ? t("profile.wrongPassword")
+                : d.error;
+            } else {
+              currentPw = "";
+              newPw = "";
+              confirmPw = "";
+              showPwSuccess();
+            }
+          })
+          .catch(() => {
+            pwError = t("profile.error");
+            pwLoading = false;
+          });
+      }
+    >
+      <if=pwError>
+        <div class="error-banner">${pwError}</div>
+      </if>
+      <if=pwSuccess>
+        <div class="success-banner">${t("profile.passwordSaved")}</div>
+      </if>
+
+      <div class="field">
+        <label for="current-pw">${t("profile.currentPassword")}</label>
+        <input
+          id="current-pw"
+          type="password"
+          required
+          value=currentPw
+          onInput(e) { currentPw = (e.target as HTMLInputElement).value; }
+        />
+      </div>
+
+      <div class="field">
+        <label for="new-pw">${t("profile.newPassword")}</label>
+        <input
+          id="new-pw"
+          type="password"
+          required
+          value=newPw
+          onInput(e) { newPw = (e.target as HTMLInputElement).value; }
+        />
+      </div>
+
+      <div class="field">
+        <label for="confirm-pw">${t("profile.confirmPassword")}</label>
+        <input
+          id="confirm-pw"
+          type="password"
+          required
+          value=confirmPw
+          onInput(e) { confirmPw = (e.target as HTMLInputElement).value; }
+        />
+      </div>
+
+      <div class="form-footer">
+        <button type="submit" class="btn-primary" disabled=pwLoading>
+          ${pwLoading ? t("profile.savingPassword") : t("profile.savePassword")}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ── Skills ────────────────────────────────────────────────── -->
+  <section class="card">
+    <h2 class="section-title">${t("profile.skills")}</h2>
+
+    <if=skillError>
+      <div class="error-banner">${skillError}</div>
+    </if>
+
+    <if=skills.length === 0 && !addingSkill>
+      <p class="empty-text">${t("profile.noSkills")}</p>
+    </if>
+
+    <div class="skill-list">
+      <for|skill| of=skills>
+        <if=editingId === skill.id>
+          <div class="skill-edit-row">
+            <input
+              type="text"
+              value=editName
+              class="skill-name-input"
+              onInput(e) { editName = (e.target as HTMLInputElement).value; }
+            />
+            <select
+              class="skill-level-select"
+              onChange(e) { editLevel = (e.target as HTMLSelectElement).value; }
+            >
+              <option value="Beginner" selected=(editLevel === "Beginner")>${t("skills.beginner")}</option>
+              <option value="Intermediate" selected=(editLevel === "Intermediate")>${t("skills.intermediate")}</option>
+              <option value="Advanced" selected=(editLevel === "Advanced")>${t("skills.advanced")}</option>
+            </select>
+            <button
+              type="button"
+              class="btn-save"
+              onClick() {
+                const name = editName.trim();
+                if (!name) return;
+                fetch(`/api/profile/skills/${skill.id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name, level: editLevel }),
+                })
+                  .then((r) => r.json())
+                  .then((d: any) => {
+                    if (d.error) { skillError = d.error; return; }
+                    skills = skills.map((s) =>
+                      s.id === skill.id ? { ...s, name: d.name, level: d.level } : s
+                    );
+                    editingId = null;
+                    skillError = "";
+                  })
+                  .catch(() => { skillError = t("profile.error"); });
+              }
+            >
+              ${t("profile.save")}
+            </button>
+            <button
+              type="button"
+              class="btn-cancel"
+              onClick() { editingId = null; }
+            >
+              ${t("profile.cancel")}
+            </button>
+          </div>
+        </if>
+        <else>
+          <div class="skill-row">
+            <const/color=levelColor[skill.level as keyof typeof levelColor] ?? "var(--text-muted)">
+            <span class="skill-badge" style=`--color: ${color}`>
+              ${skill.name}
+              <em>${t(`skills.${skill.level.toLowerCase() as "beginner" | "intermediate" | "advanced"}`)}</em>
+            </span>
+            <div class="skill-actions">
+              <button
+                type="button"
+                class="btn-sm btn-edit"
+                onClick() {
+                  editingId = skill.id;
+                  editName = skill.name;
+                  editLevel = skill.level;
+                  addingSkill = false;
+                }
+              >
+                ${t("profile.edit")}
+              </button>
+              <button
+                type="button"
+                class="btn-sm btn-del"
+                onClick() {
+                  if (confirm(t("profile.confirmRemoveSkill", { name: skill.name }))) {
+                    fetch(`/api/profile/skills/${skill.id}`, { method: "DELETE" })
+                      .then((r) => r.json())
+                      .then((d: any) => {
+                        if (d.error) { skillError = d.error; return; }
+                        skills = skills.filter((s) => s.id !== skill.id);
+                        skillError = "";
+                      })
+                      .catch(() => { skillError = t("profile.error"); });
+                  }
+                }
+              >
+                ${t("profile.remove")}
+              </button>
+            </div>
+          </div>
+        </else>
+      </for>
+    </div>
+
+    <if=addingSkill>
+      <div class="skill-edit-row add-row">
+        <input
+          type="text"
+          placeholder=t("skills.placeholder")
+          value=newSkillName
+          class="skill-name-input"
+          onInput(e) { newSkillName = (e.target as HTMLInputElement).value; }
+        />
+        <select
+          class="skill-level-select"
+          onChange(e) { newSkillLevel = (e.target as HTMLSelectElement).value; }
+        >
+          <option value="Beginner" selected=(newSkillLevel === "Beginner")>${t("skills.beginner")}</option>
+          <option value="Intermediate" selected=(newSkillLevel === "Intermediate")>${t("skills.intermediate")}</option>
+          <option value="Advanced" selected=(newSkillLevel === "Advanced")>${t("skills.advanced")}</option>
+        </select>
+        <button
+          type="button"
+          class="btn-save"
+          onClick() {
+            const name = newSkillName.trim();
+            if (!name) return;
+            fetch("/api/profile/skills", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, level: newSkillLevel }),
+            })
+              .then((r) => r.json())
+              .then((d: any) => {
+                if (d.error) { skillError = d.error; return; }
+                skills = [...skills, d];
+                addingSkill = false;
+                newSkillName = "";
+                newSkillLevel = "Beginner";
+                skillError = "";
+              })
+              .catch(() => { skillError = t("profile.error"); });
+          }
+        >
+          ${t("profile.saveSkill")}
+        </button>
+        <button
+          type="button"
+          class="btn-cancel"
+          onClick() {
+            addingSkill = false;
+            newSkillName = "";
+            newSkillLevel = "Beginner";
+          }
+        >
+          ${t("profile.cancel")}
+        </button>
+      </div>
+    </if>
+
+    <if=!addingSkill>
+      <button
+        type="button"
+        class="btn-add-skill"
+        onClick() { addingSkill = true; editingId = null; }
+      >
+        ${t("profile.addSkill")}
+      </button>
+    </if>
+  </section>
+</div>
+
+<style>
+  .page {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--text);
+  }
+
+  /* ── Cards ───────────────────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .section-title {
+    margin: 0 0 1.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* ── Forms ───────────────────────────────────────────────────── */
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  select {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.95rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+
+  input:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .form-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.25rem;
+  }
+
+  /* ── Buttons ─────────────────────────────────────────────────── */
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1.25rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* ── Feedback banners ────────────────────────────────────────── */
+  .error-banner {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: var(--error-text);
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.875rem;
+  }
+
+  .success-banner {
+    background: color-mix(in srgb, var(--skill-beginner) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--skill-beginner) 40%, transparent);
+    color: var(--skill-beginner);
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.875rem;
+  }
+
+  /* ── Skills section ──────────────────────────────────────────── */
+  .empty-text {
+    margin: 0 0 1rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .skill-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .skill-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.3rem 0;
+  }
+
+  .skill-edit-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.3rem 0;
+  }
+
+  .add-row {
+    margin-bottom: 0.5rem;
+  }
+
+  .skill-name-input {
+    min-width: 0;
+  }
+
+  .skill-level-select {
+    width: auto !important;
+  }
+
+  .skill-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .skill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    border: 1px solid color-mix(in srgb, var(--color) 40%, transparent);
+    background: color-mix(in srgb, var(--color) 12%, transparent);
+    color: var(--color);
+  }
+
+  .skill-badge em {
+    font-style: normal;
+    font-size: 0.7rem;
+    opacity: 0.7;
+  }
+
+  .btn-sm {
+    background: transparent;
+    border: 1px solid;
+    border-radius: 6px;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .btn-edit {
+    border-color: var(--border);
+    color: var(--text-muted);
+  }
+
+  .btn-edit:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-del {
+    border-color: var(--btn-delete-border);
+    color: var(--btn-delete-text);
+  }
+
+  .btn-del:hover {
+    background: var(--btn-delete-hover);
+  }
+
+  .btn-save {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+
+  .btn-save:hover {
+    background: var(--accent-hover);
+  }
+
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .btn-cancel:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+
+  .btn-add-skill {
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .btn-add-skill:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+</style>

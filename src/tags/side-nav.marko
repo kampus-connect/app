@@ -6,53 +6,29 @@ export interface Input {
 }
 
 <const/tr=($global as any).translations ?? {}>
-<const/t=(key: string, params?: Record<string, string>): string => {
+<const/t=(key: string): string => {
   const dot = key.indexOf(".");
   const s = key.slice(0, dot);
   const k = key.slice(dot + 1);
-  let v: string = (tr[s] as Record<string, string>)?.[k] ?? key;
-  if (params) for (const [p, r] of Object.entries(params)) v = v.replaceAll(`{${p}}`, r);
-  return v;
+  return (tr[s] as Record<string, string>)?.[k] ?? key;
 }>
 
 <let/expanded=false>
-<let/currentPath="/dashboard">
-<let/theme="dark">
-<let/motif="none">
-<let/locale=($global as any).locale ?? "pl">
+<let/currentPath=(() => {
+  const req = ($global as any).request as { url?: string } | undefined;
+  if (!req?.url) return "";
+  try { return new URL(req.url).pathname; } catch { return ""; }
+})()>
 
 <lifecycle
   onMount() {
     currentPath = window.location.pathname;
     const stored = localStorage.getItem("sidenav-expanded");
     if (stored !== null) expanded = stored === "true";
-    theme = localStorage.getItem("kc-theme") || "dark";
-    motif = localStorage.getItem("kc-motif") || "none";
   }
 />
 
 <const/isActive=(path: string) => currentPath.startsWith(path)>
-
-<const/applyTheme=(t_: string) => {
-  theme = t_;
-  localStorage.setItem("kc-theme", t_);
-  document.documentElement.setAttribute("data-theme", t_);
-}>
-
-<const/applyMotif=(m: string) => {
-  motif = m;
-  localStorage.setItem("kc-motif", m);
-  document.documentElement.setAttribute("data-motif", m);
-  window.dispatchEvent(new CustomEvent("kc-motif-change", { detail: { motif: m } }));
-}>
-
-<const/applyLang=(lang: string) => {
-  fetch("/api/lang", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ lang }),
-  }).then(() => window.location.reload());
-}>
 
 <const/ICONS={
   menu:     "M4 6h16M4 12h16M4 18h16",
@@ -60,7 +36,6 @@ export interface Input {
   profile:  "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8",
   settings: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z",
   logout:   "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1",
-  globe:    "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z",
 }>
 
 <const/NAV_ITEMS=[
@@ -105,58 +80,6 @@ export interface Input {
       </li>
     </for>
   </ul>
-
-  <!-- Appearance controls -->
-  <div class="appearance">
-
-    <!-- Theme -->
-    <div class="appearance-row" title=(!expanded ? t("nav.theme") : null)>
-      <svg class="icon appearance-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <if=theme === "dark">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </if>
-        <else>
-          <circle cx="12" cy="12" r="5"/>
-          <line x1="12" y1="1" x2="12" y2="3"/>
-          <line x1="12" y1="21" x2="12" y2="23"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-          <line x1="1" y1="12" x2="3" y2="12"/>
-          <line x1="21" y1="12" x2="23" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-        </else>
-      </svg>
-      <div class="appearance-controls nav-label">
-        <button class=`toggle-btn ${theme === "dark" ? "active" : ""}` onClick() { applyTheme("dark"); }>${t("nav.dark")}</button>
-        <button class=`toggle-btn ${theme === "bright" ? "active" : ""}` onClick() { applyTheme("bright"); }>${t("nav.bright")}</button>
-      </div>
-    </div>
-
-    <!-- Motif -->
-    <div class="appearance-row" title=(!expanded ? t("nav.motif") : null)>
-      <svg class="icon appearance-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
-        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-      </svg>
-      <div class="appearance-controls nav-label">
-        <button class=`toggle-btn ${motif === "none" ? "active" : ""}` onClick() { applyMotif("none"); }>${t("nav.none")}</button>
-        <button class=`toggle-btn ${motif === "plant" ? "active" : ""}` onClick() { applyMotif("plant"); }>${t("nav.plant")}</button>
-      </div>
-    </div>
-
-    <!-- Language -->
-    <div class="appearance-row" title=(!expanded ? t("nav.language") : null)>
-      <svg class="icon appearance-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d=ICONS.globe/>
-      </svg>
-      <div class="appearance-controls nav-label">
-        <button class=`toggle-btn ${locale === "pl" ? "active" : ""}` onClick() { applyLang("pl"); }>${t("lang.pl")}</button>
-        <button class=`toggle-btn ${locale === "en" ? "active" : ""}` onClick() { applyLang("en"); }>${t("lang.en")}</button>
-      </div>
-    </div>
-
-  </div>
 
   <!-- User / Logout -->
   <div class="nav-footer">
@@ -310,57 +233,6 @@ export interface Input {
   .is-expanded .nav-label {
     max-width: 160px;
     opacity: 1;
-  }
-
-  /* ── Appearance controls ────────────────────────────────────── */
-  .appearance {
-    border-top: 1px solid var(--nav-border);
-    padding: 0.5rem 0.375rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .appearance-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0 12px;
-    height: 36px;
-    flex-shrink: 0;
-  }
-
-  .appearance-icon {
-    color: var(--text-muted);
-    flex-shrink: 0;
-  }
-
-  .appearance-controls {
-    display: flex;
-    gap: 0.25rem;
-  }
-
-  .toggle-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    border-radius: 6px;
-    padding: 0.15rem 0.5rem;
-    font-size: 0.75rem;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-  }
-
-  .toggle-btn:hover {
-    border-color: var(--accent);
-    color: var(--text);
-  }
-
-  .toggle-btn.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
   }
 
   /* ── Footer: user info + logout ─────────────────────────────── */

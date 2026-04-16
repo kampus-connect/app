@@ -196,6 +196,45 @@ export function getAllSkillNames(): string[] {
   return rows.map((r) => r.name);
 }
 
+/** Returns the stored password_hash for a user (for the change-password flow). */
+export function getUserPasswordHash(id: number): string | null {
+  const row = db.prepare("SELECT password_hash FROM users WHERE id = ?").get(id) as { password_hash: string } | undefined;
+  return row?.password_hash ?? null;
+}
+
+/** Updates a user's name and/or email. Caller must verify email uniqueness. */
+export function updateUser(id: number, fields: { name?: string; email?: string }): User | null {
+  if (fields.name !== undefined) {
+    db.prepare("UPDATE users SET name = ? WHERE id = ?").run(fields.name, id);
+  }
+  if (fields.email !== undefined) {
+    db.prepare("UPDATE users SET email = ? WHERE id = ?").run(fields.email, id);
+  }
+  return getUserById(id);
+}
+
+/** Replaces a user's password_hash. */
+export function updatePassword(id: number, hash: string): void {
+  db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(hash, id);
+}
+
+/** Adds a skill to a user's profile. Returns the new skill row. */
+export function addSkill(userId: number, name: string, level: string): Skill {
+  const result = db.prepare("INSERT INTO skills (user_id, name, level) VALUES (?, ?, ?)").run(userId, name.trim(), level);
+  return { id: result.lastInsertRowid as number, user_id: userId, name: name.trim(), level };
+}
+
+/** Removes a skill by id, scoped to a specific user. Returns true if deleted. */
+export function removeSkill(skillId: number, userId: number): boolean {
+  return db.prepare("DELETE FROM skills WHERE id = ? AND user_id = ?").run(skillId, userId).changes > 0;
+}
+
+/** Updates an existing skill's name and level, scoped to a specific user. */
+export function updateSkill(skillId: number, userId: number, name: string, level: string): boolean {
+  return db.prepare("UPDATE skills SET name = ?, level = ? WHERE id = ? AND user_id = ?")
+    .run(name.trim(), level, skillId, userId).changes > 0;
+}
+
 // ── Role management ───────────────────────────────────────────────────────────
 
 export function hasRole(userId: number, role: string): boolean {
