@@ -20,7 +20,9 @@
     "clearFilters": "Clear filters",
     "noUsersMatch": "No users match all selected skills.",
     "noUsers": "No registered users yet.",
-    "addFirst": "Add the first one"
+    "addFirst": "Add the first one",
+    "searchSkills": "Search skills (min. 3 characters)…",
+    "noMatchingSkills": "No matching skills"
   },
   "card": {
     "noSkills": "No skills yet",

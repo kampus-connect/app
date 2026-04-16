@@ -1,0 +1,302 @@
+export interface Input {
+  skills: { name: string; count: number }[];
+  selectedSkills: Set<string>;
+  onToggle: (skill: string) => void;
+  onClear: () => void;
+}
+
+<const/tr=($global as any).translations ?? {}>
+<const/t=(key: string): string => {
+  const dot = key.indexOf(".");
+  const s = key.slice(0, dot);
+  const k = key.slice(dot + 1);
+  return (tr[s] as Record<string, string>)?.[k] ?? key;
+}>
+
+<let/query="">
+<let/open=false>
+<let/focusedIndex=-1>
+
+<const/suggestions=(() => {
+  if (query.length < 3) return [] as { name: string; count: number }[];
+  const q = query.toLowerCase();
+  return input.skills
+    .filter((s) => s.name.toLowerCase().includes(q) && !input.selectedSkills.has(s.name))
+    .slice(0, 8);
+})()>
+
+<const/handleSelect=(name: string) => {
+  input.onToggle(name);
+  query = "";
+  open = false;
+  focusedIndex = -1;
+}>
+
+<div class="skill-search">
+  <!-- Selected pills -->
+  <if=input.selectedSkills.size>
+    <div class="selected-pills">
+      <for|skill| of=[...input.selectedSkills]>
+        <span class="pill">
+          ${skill}
+          <button
+            class="pill-remove"
+            aria-label=`Remove ${skill}`
+            onClick() { input.onToggle(skill); }
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </span>
+      </for>
+      <button class="clear-all" onClick() { input.onClear(); }>
+        ${t("dashboard.clearFilters")}
+      </button>
+    </div>
+  </if>
+
+  <!-- Search input + dropdown -->
+  <div class="search-wrap">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8"/>
+      <path d="M21 21l-4.35-4.35"/>
+    </svg>
+
+    <input
+      class="search-input"
+      type="text"
+      placeholder=t("dashboard.searchSkills")
+      value=query
+      autocomplete="off"
+      spellcheck=false
+      onInput(e) {
+        query = (e.target as HTMLInputElement).value;
+        open = query.length >= 3;
+        focusedIndex = -1;
+      }
+      onKeyDown(e) {
+        if (e.key === "Escape") {
+          query = "";
+          open = false;
+          focusedIndex = -1;
+          return;
+        }
+        if (!open || suggestions.length === 0) return;
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          focusedIndex = (focusedIndex + 1) % suggestions.length;
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          focusedIndex = focusedIndex <= 0 ? suggestions.length - 1 : focusedIndex - 1;
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          const idx = focusedIndex >= 0 ? focusedIndex : 0;
+          if (suggestions[idx]) handleSelect(suggestions[idx].name);
+        }
+      }
+      onFocus() {
+        if (query.length >= 3) open = true;
+      }
+      onBlur() {
+        setTimeout(() => { open = false; focusedIndex = -1; }, 150);
+      }
+    />
+
+    <if=open>
+      <if=suggestions.length>
+        <ul class="suggestions" role="listbox">
+          <for|s, i| of=suggestions>
+            <li
+              class=`suggestion-item ${i === focusedIndex ? "is-focused" : ""}`
+              role="option"
+              aria-selected=(i === focusedIndex)
+              onMouseDown(e) { e.preventDefault(); handleSelect(s.name); }
+            >
+              <span class="sug-name">${s.name}</span>
+              <span class="sug-count">${s.count}</span>
+            </li>
+          </for>
+        </ul>
+      </if>
+      <else>
+        <div class="no-suggestions">${t("dashboard.noMatchingSkills")}</div>
+      </else>
+    </if>
+  </div>
+</div>
+
+<style>
+  .skill-search {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  /* ── Selected pills ─────────────────────────────────────────── */
+  .selected-pills {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.25rem 0.5rem 0.25rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+
+  .pill-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.75);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    transition: color 0.12s, background 0.12s;
+  }
+
+  .pill-remove:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .pill-remove svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .clear-all {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 0.25rem 0.4rem;
+    text-decoration: underline;
+    transition: color 0.12s;
+  }
+
+  .clear-all:hover {
+    color: var(--text);
+  }
+
+  /* ── Search input wrapper ───────────────────────────────────── */
+  .search-wrap {
+    position: relative;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.55rem 0.75rem 0.55rem 2.25rem;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.875rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .search-input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  /* ── Dropdown ───────────────────────────────────────────────── */
+  .suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    z-index: 100;
+    animation: dropdown-enter 0.1s ease both;
+  }
+
+  @keyframes dropdown-enter {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .suggestion-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 0.65rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .suggestion-item:hover,
+  .suggestion-item.is-focused {
+    background: var(--surface-hover);
+  }
+
+  .sug-name {
+    font-size: 0.875rem;
+    color: var(--text);
+  }
+
+  .sug-count {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    background: var(--border);
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    font-variant-numeric: tabular-nums;
+    min-width: 1.5rem;
+    text-align: center;
+  }
+
+  .no-suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    z-index: 100;
+  }
+</style>

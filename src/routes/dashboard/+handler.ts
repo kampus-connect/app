@@ -1,4 +1,4 @@
-import { getAllSkillNames, getDashboardUsers, getSession, getUserById, hasRole } from "../../lib/db.js";
+import { getAllSkillsWithCounts, getDashboardUsers, getSession, getUserById, hasRole } from "../../lib/db.js";
 import { parseCookies } from "../../lib/auth.js";
 import { injectI18n } from "../../lib/i18n.js";
 
@@ -16,6 +16,6 @@ export function GET(context: Record<string, unknown>, next: () => Promise<Respon
   context["currentUser"] = currentUser;
   context["isAdmin"] = hasRole(session.user_id, "admin");
   context["users"] = getDashboardUsers();
-  context["allSkills"] = getAllSkillNames();
+  context["allSkillsWithCounts"] = getAllSkillsWithCounts();
   return next();
 }

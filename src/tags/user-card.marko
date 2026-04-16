@@ -39,7 +39,7 @@ export interface Input {
   </div>
 
   <div class="skills">
-    <if=user.skills.length > 0>
+    <if=user.skills.length>
       <for|skill| of=user.skills>
         <const/color=levelColor[skill.level as keyof typeof levelColor] ?? "var(--text-muted)">
         <const/levelLabel=t(`skills.${skill.level.toLowerCase() as "beginner" | "intermediate" | "advanced"}`)>

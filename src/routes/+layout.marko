@@ -15,6 +15,22 @@
         document.documentElement.setAttribute("data-motif", m);
       })();
     </script>
+    <script>
+      (function () {
+        // Intercept same-origin link clicks and fade out current page before navigating
+        document.addEventListener("click", function (e) {
+          var link = e.target.closest("a[href]");
+          if (!link || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+          var href = link.getAttribute("href");
+          if (!href || href.startsWith("#") || href.startsWith("http://") || href.startsWith("https://") || href.startsWith("mailto:")) return;
+          document.documentElement.classList.add("is-navigating");
+        });
+        // Ensure fade-in on back/forward navigation
+        window.addEventListener("pageshow", function (e) {
+          document.documentElement.classList.remove("is-navigating");
+        });
+      })();
+    </script>
   </head>
   <body>
     <div class="app-shell">
@@ -188,5 +204,48 @@
     overflow-x: hidden;
     position: relative;
     z-index: 1;
+    animation: page-enter 0.18s ease both;
+  }
+
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Fade out current page content before navigation */
+  html.is-navigating .app-main {
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+    pointer-events: none;
+  }
+
+  /* Native View Transitions API (Chrome 126+) */
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root) {
+    animation: 120ms ease both vt-fade-out;
+  }
+
+  ::view-transition-new(root) {
+    animation: 180ms ease both vt-fade-in;
+  }
+
+  @keyframes vt-fade-out {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-4px); }
+  }
+
+  @keyframes vt-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 </style>

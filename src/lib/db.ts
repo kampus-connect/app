@@ -196,6 +196,18 @@ export function getAllSkillNames(): string[] {
   return rows.map((r) => r.name);
 }
 
+/** Skill names with count of distinct dashboard users who have each skill, sorted by count desc. */
+export function getAllSkillsWithCounts(): { name: string; count: number }[] {
+  return db.prepare(`
+    SELECT s.name, COUNT(DISTINCT s.user_id) AS count
+    FROM skills s
+    INNER JOIN user_roles ur ON ur.user_id = s.user_id AND ur.role = 'standard'
+    WHERE s.user_id NOT IN (SELECT user_id FROM user_roles WHERE role = 'admin')
+    GROUP BY s.name
+    ORDER BY count DESC, s.name
+  `).all() as { name: string; count: number }[];
+}
+
 /** Returns the stored password_hash for a user (for the change-password flow). */
 export function getUserPasswordHash(id: number): string | null {
   const row = db.prepare("SELECT password_hash FROM users WHERE id = ?").get(id) as { password_hash: string } | undefined;

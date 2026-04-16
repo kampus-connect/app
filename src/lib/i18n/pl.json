@@ -20,7 +20,9 @@
     "clearFilters": "Wyczyść filtry",
     "noUsersMatch": "Brak użytkowników pasujących do wybranych umiejętności.",
     "noUsers": "Brak zarejestrowanych użytkowników.",
-    "addFirst": "Dodaj pierwszego"
+    "addFirst": "Dodaj pierwszego",
+    "searchSkills": "Szukaj umiejętności (min. 3 znaki)…",
+    "noMatchingSkills": "Brak pasujących umiejętności"
   },
   "card": {
     "noSkills": "Brak umiejętności",
