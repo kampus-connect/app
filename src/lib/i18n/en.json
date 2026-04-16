@@ -11,7 +11,9 @@
     "motif": "Motif",
     "none": "None",
     "plant": "Plant",
-    "language": "Language"
+    "language": "Language",
+    "admin": "Admin",
+    "addUser": "Add User"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -22,7 +24,9 @@
     "noUsers": "No registered users yet.",
     "addFirst": "Add the first one",
     "searchSkills": "Search skills (min. 3 characters)…",
-    "noMatchingSkills": "No matching skills"
+    "noMatchingSkills": "No matching skills",
+    "allSkills": "All Skills",
+    "userCount": "{count} users"
   },
   "card": {
     "noSkills": "No skills yet",

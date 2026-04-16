@@ -11,7 +11,9 @@
     "motif": "Ornament",
     "none": "Brak",
     "plant": "Roślinny",
-    "language": "Język"
+    "language": "Język",
+    "admin": "Admin",
+    "addUser": "Dodaj użytkownika"
   },
   "dashboard": {
     "title": "Pulpit",
@@ -22,7 +24,9 @@
     "noUsers": "Brak zarejestrowanych użytkowników.",
     "addFirst": "Dodaj pierwszego",
     "searchSkills": "Szukaj umiejętności (min. 3 znaki)…",
-    "noMatchingSkills": "Brak pasujących umiejętności"
+    "noMatchingSkills": "Brak pasujących umiejętności",
+    "allSkills": "Wszystkie umiejętności",
+    "userCount": "{count} os."
   },
   "card": {
     "noSkills": "Brak umiejętności",

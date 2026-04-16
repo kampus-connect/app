@@ -1,4 +1,46 @@
+
+
+
+
+    Default view — Skill Grid
+  - Skills are shown as cards in an auto-fill grid, ordered by user count (most popular first, from the DB query)                                                                             
+  - Each card shows the skill name and a count like "5 users" / "5 os."                                                                                                                       
+  - Hovering lifts the card slightly with an accent-color border                                                                                                                              
+                                                                                                                                                                                              
+  After clicking a skill — User Cards view                                                                                                                                                    
+  - A small ← All Skills back button appears above the heading                                                                                                                                
+  - The heading shows the skill name + a muted count badge with the number of matching users                                                                                                  
+  - User cards are displayed exactly as before (including admin actions if admin)                                                                                                             
+  - Clicking back returns to the skill grid                                                                                                                                                   
+                                                                                                                                                                                              
+  The skill-search component and the old filter row are removed from the dashboard — the skill grid itself is now the browsing interface. The skill-search component still exists as a        
+  reusable tag if needed elsewhere.   
+
+
+
+  Good. Now the isActive("/users/create") check could conflict with /users/ being a prefix match for anything under /users. Let me verify — it uses startsWith, and /dashboard etc. are fine,
+  but /users/create won't false-positive match other routes since there are no other routes under /users/ visible to users. That's fine.                                                      
+                                                                                          
+  Here's a summary of every change made:                                                                                                                                                      
+                                                                                                                                                                                              
+  Security (already in place, verified):                                                                                                                                                      
+  - GET /users/create — redirects non-admins to /dashboard via requireAdmin                                                                                                                   
+  - POST /api/users — returns 401/403 for non-admins via requireAdmin                                                                                                                         
+                                                                     
+  Side nav (side-nav.marko):                                                                                                                                                                  
+  - Input.currentUser now includes roles: string[]                                                                                                                                            
+  - isAdmin is derived from input.currentUser.roles.includes("admin")                                                                                                                         
+  - A new Admin section appears between the main nav list and the user footer — only rendered when isAdmin is true                                                                            
+  - It shows an "Add User" link with a user-plus icon, styled the same as other nav items, and highlights when /users/create is the active path                                               
+  - The "Admin" section label slides in when the nav is expanded (same animation as other labels)                                                                                             
+                                                                                                                                                                                              
+  Dashboard (+page.marko):                                                                                                                                                                    
+  - The "+ Add User" button is removed from both the skill grid header and the skill detail header     
+
+
+
   Routing changes:                                                                                                                                                                            
+
   - Created src/routes/dashboard/ with +page.marko, +handler.ts, +meta.json — the dashboard now lives at /dashboard                                                                           
   - Root +handler.ts now redirects authenticated users to /dashboard; unauthenticated visitors see the landing page                                                                           
                                                                                                                    
