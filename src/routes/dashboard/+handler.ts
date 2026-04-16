@@ -15,7 +15,12 @@ export function GET(context: Record<string, unknown>, next: () => Promise<Respon
 
   context["currentUser"] = currentUser;
   context["isAdmin"] = hasRole(session.user_id, "admin");
-  context["users"] = getDashboardUsers();
+  context["users"] = getDashboardUsers().map((u) => {
+    const parts = u.name.trim().split(/\s+/);
+    const firstName = parts[0] ?? "";
+    const surnameInitial = parts.length > 1 ? parts[parts.length - 1][0] + "." : "";
+    return { ...u, name: surnameInitial ? `${firstName} ${surnameInitial}` : firstName };
+  });
   context["allSkillsWithCounts"] = getAllSkillsWithCounts();
   return next();
 }

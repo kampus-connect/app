@@ -1,3 +1,19 @@
+● Done. The truncation happens in dashboard/+handler.ts before the data is serialised and sent to the browser — so "Anna Kowalska" becomes "Anna K." in the server response, and "Kowalska"   
+  never appears anywhere in the HTML, JSON, or SSR output. The template just renders whatever name it receives and has no knowledge of the original.   
+
+
+
+● Builds clean. Here's what changed in the dashboard's activity-detail view:                                                                                                                  
+                                                                                                                                                                                              
+  - Replaced <user-card> with a minimal inline card — no email, no role badge, no admin actions                                                                                               
+  - Shows user's full name as the card heading                                                                                                                                                
+  - Shows only the matched activity (the one you clicked on), with each checked option (Learn it, Teach others, Doing it) rendered as a coloured pill followed by the user's comment          
+  underneath it                                                                                                                                                                               
+  - Users with no options checked still appear by name (the pill section just stays empty)  
+
+
+
+
 ● Build passes cleanly. Here's a summary of everything that changed:                                                                                                                          
                                                                                           
   Data model (db.ts):                                                                                                                                                                         
