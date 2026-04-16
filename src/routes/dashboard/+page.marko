@@ -56,13 +56,6 @@
   return parts;
 }>
 
-<const/searchQ=searchQuery.toLowerCase().trim()>
-
-<const/displayedSkills=(allSkillsWithCounts as { name: string; count: number }[])
-  .map((s) => ({ ...s, score: matchScore(s.name, searchQ) }))
-  .filter((s) => s.score > 0)
-  .sort((a, b) => b.score - a.score || b.count - a.count)>
-
 <const/skillUsers=activeSkill
   ? (users as any[]).filter((u) => u.skills.some((sk: any) => sk.name === activeSkill))
   : []>
@@ -76,6 +69,13 @@
     </header>
 
     <if=allSkillsWithCounts.length>
+      <!-- Computed inside this block so reactive tracking is fresh on every remount -->
+      <const/searchQ=searchQuery.toLowerCase().trim()>
+      <const/displayedSkills=(allSkillsWithCounts as { name: string; count: number }[])
+        .map((s) => ({ ...s, score: matchScore(s.name, searchQ) }))
+        .filter((s) => s.score > 0)
+        .sort((a, b) => b.score - a.score || b.count - a.count)>
+
       <!-- Search bar -->
       <div class="search-wrap">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

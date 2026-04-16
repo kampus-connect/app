@@ -1,3 +1,11 @@
+● Good. The structure is correct — searchQ and displayedSkills are now scoped inside the <if=allSkillsWithCounts.length> block (which is itself inside <if=activeSkill === null>). Every time 
+  the user navigates back to the skill grid, both consts are freshly created, re-establishing their reactive subscriptions to searchQuery from scratch.
+                                                                                          
+  The root cause: Marko's fine-grained reactivity tracks dependencies at the point where reactive values are read. A top-level <const> that depends on searchQuery only stays connected to the
+   subtree that reads it. When that subtree unmounts (navigation to skill detail) the subscription chain breaks, and on remount the computed value doesn't re-subscribe because its own value 
+  hasn't changed. Placing the derived consts inside the same conditional block as their consumers guarantees they're recreated — and fully re-subscribed — each time.    
+
+
 ● Here's what was implemented:                          
                                                                                           
   Search bar — full-width input with a magnifier icon and an × clear button (appears only when there's text). Escape also clears the query.                                                   
