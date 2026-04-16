@@ -2,11 +2,11 @@
 
 # Installation
 
+Make sure that there is sibling folder called 'db' it will contain your custom database
+
 ```
-npm init marko -- --template basic
-cd marko-app
-npm install
-npm run dev
+npm install -D @marko/type-check
+npm audit fix
 ```
 
 ## Overview
