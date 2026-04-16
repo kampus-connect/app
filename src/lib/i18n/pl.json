@@ -1,0 +1,82 @@
+{
+  "nav": {
+    "brand": "Kampus Connect",
+    "dashboard": "Pulpit",
+    "profile": "Profil",
+    "settings": "Ustawienia",
+    "logout": "Wyloguj",
+    "theme": "Motyw kolorystyczny",
+    "dark": "Ciemny",
+    "bright": "Jasny",
+    "motif": "Ornament",
+    "none": "Brak",
+    "plant": "Roślinny",
+    "language": "Język"
+  },
+  "dashboard": {
+    "title": "Pulpit",
+    "addUser": "+ Dodaj użytkownika",
+    "filterBySkill": "Filtruj po umiejętności",
+    "clearFilters": "Wyczyść filtry",
+    "noUsersMatch": "Brak użytkowników pasujących do wybranych umiejętności.",
+    "noUsers": "Brak zarejestrowanych użytkowników.",
+    "addFirst": "Dodaj pierwszego"
+  },
+  "card": {
+    "noSkills": "Brak umiejętności",
+    "removeAdmin": "Odbierz admina",
+    "makeAdmin": "Nadaj admina",
+    "delete": "Usuń",
+    "confirmRemoveAdmin": "Odebrać rolę administratora użytkownikowi {name}?",
+    "confirmMakeAdmin": "Nadać rolę administratora użytkownikowi {name}?",
+    "confirmDelete": "Usunąć użytkownika {name}?"
+  },
+  "skills": {
+    "beginner": "Początkujący",
+    "intermediate": "Średniozaawansowany",
+    "advanced": "Zaawansowany",
+    "placeholder": "np. JavaScript",
+    "add": "+ Dodaj umiejętność",
+    "label": "Umiejętności",
+    "yourLabel": "Twoje umiejętności",
+    "optional": "(opcjonalnie)"
+  },
+  "login": {
+    "title": "Zaloguj się",
+    "subtitle": "Witaj z powrotem — zaloguj się, by zobaczyć pulpit.",
+    "email": "Email",
+    "password": "Hasło",
+    "submitting": "Logowanie…",
+    "submit": "Zaloguj się",
+    "noAccount": "Nie masz konta?",
+    "createOne": "Utwórz je",
+    "error": "Coś poszło nie tak. Spróbuj ponownie."
+  },
+  "register": {
+    "title": "Utwórz konto",
+    "subtitle": "Zarejestruj się i dodaj swoje umiejętności.",
+    "fullName": "Imię i nazwisko",
+    "namePlaceholder": "Anna Kowalska",
+    "email": "Email",
+    "password": "Hasło",
+    "passwordPlaceholder": "Co najmniej 6 znaków",
+    "submitting": "Tworzenie konta…",
+    "submit": "Utwórz konto",
+    "haveAccount": "Masz już konto?",
+    "signIn": "Zaloguj się",
+    "error": "Coś poszło nie tak. Spróbuj ponownie."
+  },
+  "createUser": {
+    "title": "Dodaj nowego użytkownika",
+    "back": "← Wróć",
+    "name": "Imię i nazwisko",
+    "email": "Email",
+    "submitting": "Tworzenie…",
+    "submit": "Utwórz użytkownika",
+    "error": "Coś poszło nie tak. Spróbuj ponownie."
+  },
+  "lang": {
+    "pl": "Polski",
+    "en": "English"
+  }
+}

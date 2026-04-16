@@ -1,0 +1,192 @@
+<const/tr=($global as any).translations ?? {}>
+<const/t=(key: string, params?: Record<string, string>): string => {
+  const dot = key.indexOf(".");
+  const s = key.slice(0, dot);
+  const k = key.slice(dot + 1);
+  let v: string = (tr[s] as Record<string, string>)?.[k] ?? key;
+  if (params) for (const [p, r] of Object.entries(params)) v = v.replaceAll(`{${p}}`, r);
+  return v;
+}>
+
+<const/users=($global as any).users ?? []>
+<const/isAdmin=($global as any).isAdmin ?? false>
+<const/allSkills=($global as any).allSkills ?? []>
+
+<let/selectedSkills=(new Set() as Set<string>)>
+
+<const/toggleSkill=(skill: string) => {
+  const next = new Set(selectedSkills);
+  if (next.has(skill)) next.delete(skill); else next.add(skill);
+  selectedSkills = next;
+}>
+
+<const/filteredUsers=selectedSkills.size === 0
+  ? users
+  : users.filter((u: any) => [...selectedSkills].every((s: string) => u.skills.some((sk: any) => sk.name === s)))>
+
+<div class="page">
+  <header class="page-header">
+    <h1>${t("dashboard.title")}</h1>
+    <if=isAdmin>
+      <a href="/users/create" class="btn-primary">${t("dashboard.addUser")}</a>
+    </if>
+  </header>
+
+  <if=allSkills.length > 0>
+    <div class="skill-filter">
+      <span class="filter-label">${t("dashboard.filterBySkill")}</span>
+      <div class="skill-tags">
+        <for|skill| of=allSkills>
+          <button
+            class=`skill-tag ${selectedSkills.has(skill) ? "active" : ""}`
+            onClick() { toggleSkill(skill); }
+          >
+            ${skill}
+          </button>
+        </for>
+      </div>
+      <if=selectedSkills.size > 0>
+        <button class="clear-btn" onClick() { selectedSkills = new Set(); }>
+          ${t("dashboard.clearFilters")}
+        </button>
+      </if>
+    </div>
+  </if>
+
+  <if=filteredUsers.length === 0>
+    <div class="empty-state">
+      <if=selectedSkills.size > 0>
+        <p>${t("dashboard.noUsersMatch")}</p>
+        <button class="btn-primary" onClick() { selectedSkills = new Set(); }>
+          ${t("dashboard.clearFilters")}
+        </button>
+      </if>
+      <else>
+        <p>${t("dashboard.noUsers")}</p>
+        <if=isAdmin>
+          <a href="/users/create" class="btn-primary">${t("dashboard.addFirst")}</a>
+        </if>
+      </else>
+    </div>
+  </if>
+  <else>
+    <div class="users-grid">
+      <for|user| of=filteredUsers>
+        <user-card user=user isAdmin=isAdmin/>
+      </for>
+    </div>
+  </else>
+</div>
+
+<style>
+  .page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+
+  .page-header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--text);
+  }
+
+  .skill-filter {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .filter-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-right: 0.25rem;
+    white-space: nowrap;
+  }
+
+  .skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .skill-tag {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .skill-tag:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .skill-tag.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .clear-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    text-decoration: underline;
+    margin-left: 0.25rem;
+  }
+
+  .clear-btn:hover {
+    color: var(--text);
+  }
+
+  .users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.15s;
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-hover);
+    color: #fff;
+  }
+</style>

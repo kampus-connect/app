@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang=`${($global as any).locale ?? "pl"}`>
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kampus Connect">
+    <title>${($global as any).meta?.pageTitle || "Kampus Connect"}</title>
+    <meta name="color-scheme" content="dark">
+    <script>
+      (function () {
+        var t = localStorage.getItem("kc-theme") || "dark";
+        var m = localStorage.getItem("kc-motif") || "none";
+        document.documentElement.setAttribute("data-theme", t);
+        document.documentElement.setAttribute("data-motif", m);
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <if=($global as any).currentUser>
+        <side-nav currentUser=($global as any).currentUser/>
+      </if>
+      <main class="app-main">
+        <${input.content}/>
+      </main>
+    </div>
+    <plant-motif/>
+  </body>
+</html>
+
+<style>
+  /* ── Reset ───────────────────────────────────────────────────── */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  /* ── Design tokens: dark (default) ──────────────────────────── */
+  :root {
+    --bg:                 #15151e;
+    --surface:            #1e1e2e;
+    --surface-hover:      #252535;
+    --border:             #2e2e3e;
+    --text:               #ffffff;
+    --text-muted:         #888888;
+    --text-dim:           #555555;
+    --text-link:          #7c6af6;
+    --accent:             #7c6af6;
+    --accent-hover:       #6a59e0;
+
+    --nav-bg:             #1e1e2e;
+    --nav-border:         #2e2e3e;
+    --nav-hover-bg:       #252535;
+    --nav-hover-text:     #cccccc;
+    --nav-active-bg:      #2a2346;
+    --nav-active-text:    #c4b5fd;
+    --nav-active-icon:    #7c6af6;
+    --nav-toggle-color:   #888888;
+    --brand-text:         #ffffff;
+
+    --avatar-bg:          #3d3560;
+    --avatar-text:        #c4b5fd;
+
+    --logout-hover-bg:    #2e1e1e;
+    --logout-hover-text:  #f87171;
+
+    --input-bg:           #15151e;
+    --error-bg:           #3e1e1e;
+    --error-border:       #f87171;
+    --error-text:         #f87171;
+
+    --role-std-bg:        #1e3a2e;
+    --role-std-text:      #4ade80;
+    --role-std-border:    #2e5a3e;
+    --role-adm-bg:        #2e1e3e;
+    --role-adm-text:      #c4b5fd;
+    --role-adm-border:    #4e3e6e;
+
+    --btn-promote-border: #4e3e6e;
+    --btn-promote-text:   #c4b5fd;
+    --btn-promote-hover:  #2e1e3e;
+    --btn-demote-border:  #3e3e2e;
+    --btn-demote-text:    #facc15;
+    --btn-demote-hover:   #2e2e1e;
+    --btn-delete-border:  #3e1e1e;
+    --btn-delete-text:    #f87171;
+    --btn-delete-hover:   #3e1e1e;
+
+    --skill-beginner:     #4ade80;
+    --skill-intermediate: #facc15;
+    --skill-advanced:     #f87171;
+
+    --plant-leaf-1:       #2a5a3a;
+    --plant-leaf-2:       #1e4a30;
+    --plant-leaf-3:       #346644;
+    --plant-stem:         #2a5a3a;
+    --plant-opacity:      0.35;
+  }
+
+  /* ── Design tokens: bright ───────────────────────────────────── */
+  :root[data-theme="bright"] {
+    --bg:                 #f0f4ee;
+    --surface:            #ffffff;
+    --surface-hover:      #f5f3ff;
+    --border:             #dde4db;
+    --text:               #1a1e19;
+    --text-muted:         #6b7a69;
+    --text-dim:           #9aaa98;
+    --text-link:          #7c6af6;
+    --accent:             #7c6af6;
+    --accent-hover:       #6a59e0;
+
+    --nav-bg:             #ffffff;
+    --nav-border:         #e0e8de;
+    --nav-hover-bg:       #f5f3ff;
+    --nav-hover-text:     #1a1e19;
+    --nav-active-bg:      #ede9ff;
+    --nav-active-text:    #5b49e0;
+    --nav-active-icon:    #7c6af6;
+    --nav-toggle-color:   #6b7a69;
+    --brand-text:         #1a1e19;
+
+    --avatar-bg:          #ede9ff;
+    --avatar-text:        #7c6af6;
+
+    --logout-hover-bg:    #fef2f2;
+    --logout-hover-text:  #ef4444;
+
+    --input-bg:           #f8faf7;
+    --error-bg:           #fef2f2;
+    --error-border:       #ef4444;
+    --error-text:         #ef4444;
+
+    --role-std-bg:        #f0fdf4;
+    --role-std-text:      #16a34a;
+    --role-std-border:    #bbf7d0;
+    --role-adm-bg:        #f5f3ff;
+    --role-adm-text:      #6d28d9;
+    --role-adm-border:    #ddd6fe;
+
+    --btn-promote-border: #ddd6fe;
+    --btn-promote-text:   #6d28d9;
+    --btn-promote-hover:  #f5f3ff;
+    --btn-demote-border:  #fde68a;
+    --btn-demote-text:    #d97706;
+    --btn-demote-hover:   #fffbeb;
+    --btn-delete-border:  #fecaca;
+    --btn-delete-text:    #dc2626;
+    --btn-delete-hover:   #fef2f2;
+
+    --skill-beginner:     #16a34a;
+    --skill-intermediate: #d97706;
+    --skill-advanced:     #dc2626;
+
+    --plant-leaf-1:       #4a8a5a;
+    --plant-leaf-2:       #5da46e;
+    --plant-leaf-3:       #3a7a4a;
+    --plant-stem:         #3a7a4a;
+    --plant-opacity:      0.65;
+  }
+
+  /* ── Base ────────────────────────────────────────────────────── */
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: system-ui, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    transition: background 0.2s, color 0.2s;
+  }
+
+  a {
+    color: var(--text-link);
+  }
+
+  .app-shell {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .app-main {
+    flex: 1;
+    min-width: 0;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 1;
+  }
+</style>

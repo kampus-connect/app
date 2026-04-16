@@ -1,0 +1,82 @@
+{
+  "nav": {
+    "brand": "Kampus Connect",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Log out",
+    "theme": "Color theme",
+    "dark": "Dark",
+    "bright": "Bright",
+    "motif": "Motif",
+    "none": "None",
+    "plant": "Plant",
+    "language": "Language"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "addUser": "+ Add User",
+    "filterBySkill": "Filter by skill",
+    "clearFilters": "Clear filters",
+    "noUsersMatch": "No users match all selected skills.",
+    "noUsers": "No registered users yet.",
+    "addFirst": "Add the first one"
+  },
+  "card": {
+    "noSkills": "No skills yet",
+    "removeAdmin": "Remove Admin",
+    "makeAdmin": "Make Admin",
+    "delete": "Delete",
+    "confirmRemoveAdmin": "Remove admin role from {name}?",
+    "confirmMakeAdmin": "Make {name} an admin?",
+    "confirmDelete": "Delete {name}?"
+  },
+  "skills": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "placeholder": "e.g. JavaScript",
+    "add": "+ Add skill",
+    "label": "Skills",
+    "yourLabel": "Your skills",
+    "optional": "(optional)"
+  },
+  "login": {
+    "title": "Sign in",
+    "subtitle": "Welcome back — sign in to view the dashboard.",
+    "email": "Email",
+    "password": "Password",
+    "submitting": "Signing in…",
+    "submit": "Sign in",
+    "noAccount": "No account yet?",
+    "createOne": "Create one",
+    "error": "Something went wrong. Please try again."
+  },
+  "register": {
+    "title": "Create account",
+    "subtitle": "Register and add your skills to the database.",
+    "fullName": "Full name",
+    "namePlaceholder": "Alice Johnson",
+    "email": "Email",
+    "password": "Password",
+    "passwordPlaceholder": "At least 6 characters",
+    "submitting": "Creating account…",
+    "submit": "Create account",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "error": "Something went wrong. Please try again."
+  },
+  "createUser": {
+    "title": "Add New User",
+    "back": "← Back",
+    "name": "Name",
+    "email": "Email",
+    "submitting": "Creating…",
+    "submit": "Create User",
+    "error": "Something went wrong. Please try again."
+  },
+  "lang": {
+    "pl": "Polski",
+    "en": "English"
+  }
+}

@@ -1,0 +1,439 @@
+export interface Input {
+  currentUser: {
+    name: string;
+    email: string;
+  };
+}
+
+<const/tr=($global as any).translations ?? {}>
+<const/t=(key: string, params?: Record<string, string>): string => {
+  const dot = key.indexOf(".");
+  const s = key.slice(0, dot);
+  const k = key.slice(dot + 1);
+  let v: string = (tr[s] as Record<string, string>)?.[k] ?? key;
+  if (params) for (const [p, r] of Object.entries(params)) v = v.replaceAll(`{${p}}`, r);
+  return v;
+}>
+
+<let/expanded=false>
+<let/currentPath="/dashboard">
+<let/theme="dark">
+<let/motif="none">
+<let/locale=($global as any).locale ?? "pl">
+
+<lifecycle
+  onMount() {
+    currentPath = window.location.pathname;
+    const stored = localStorage.getItem("sidenav-expanded");
+    if (stored !== null) expanded = stored === "true";
+    theme = localStorage.getItem("kc-theme") || "dark";
+    motif = localStorage.getItem("kc-motif") || "none";
+  }
+/>
+
+<const/isActive=(path: string) => currentPath.startsWith(path)>
+
+<const/applyTheme=(t_: string) => {
+  theme = t_;
+  localStorage.setItem("kc-theme", t_);
+  document.documentElement.setAttribute("data-theme", t_);
+}>
+
+<const/applyMotif=(m: string) => {
+  motif = m;
+  localStorage.setItem("kc-motif", m);
+  document.documentElement.setAttribute("data-motif", m);
+  window.dispatchEvent(new CustomEvent("kc-motif-change", { detail: { motif: m } }));
+}>
+
+<const/applyLang=(lang: string) => {
+  fetch("/api/lang", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ lang }),
+  }).then(() => window.location.reload());
+}>
+
+<const/ICONS={
+  menu:     "M4 6h16M4 12h16M4 18h16",
+  dashboard:"M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
+  profile:  "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8",
+  settings: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z",
+  logout:   "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1",
+  globe:    "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z",
+}>
+
+<const/NAV_ITEMS=[
+  { path: "/dashboard", labelKey: "nav.dashboard", icon: "dashboard" },
+  { path: "/profile",   labelKey: "nav.profile",   icon: "profile"   },
+  { path: "/settings",  labelKey: "nav.settings",  icon: "settings"  },
+]>
+
+<nav class=`side-nav ${expanded ? "is-expanded" : ""}` aria-label="Main navigation">
+
+  <!-- Toggle -->
+  <button
+    class="nav-toggle"
+    aria-label="Toggle navigation"
+    onClick() {
+      expanded = !expanded;
+      localStorage.setItem("sidenav-expanded", String(expanded));
+    }
+  >
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d=ICONS.menu/>
+    </svg>
+    <span class="nav-label brand-label">${t("nav.brand")}</span>
+  </button>
+
+  <!-- Navigation items -->
+  <ul class="nav-list" role="list">
+    <for|item| of=NAV_ITEMS>
+      <const/active=isActive(item.path)>
+      <li>
+        <a
+          href=item.path
+          class=`nav-item ${active ? "is-active" : ""}`
+          title=(!expanded ? t(item.labelKey) : null)
+          aria-current=(active ? "page" : null)
+        >
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d=ICONS[item.icon as keyof typeof ICONS]/>
+          </svg>
+          <span class="nav-label">${t(item.labelKey)}</span>
+        </a>
+      </li>
+    </for>
+  </ul>
+
+  <!-- Appearance controls -->
+  <div class="appearance">
+
+    <!-- Theme -->
+    <div class="appearance-row" title=(!expanded ? t("nav.theme") : null)>
+      <svg class="icon appearance-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <if=theme === "dark">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </if>
+        <else>
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </else>
+      </svg>
+      <div class="appearance-controls nav-label">
+        <button class=`toggle-btn ${theme === "dark" ? "active" : ""}` onClick() { applyTheme("dark"); }>${t("nav.dark")}</button>
+        <button class=`toggle-btn ${theme === "bright" ? "active" : ""}` onClick() { applyTheme("bright"); }>${t("nav.bright")}</button>
+      </div>
+    </div>
+
+    <!-- Motif -->
+    <div class="appearance-row" title=(!expanded ? t("nav.motif") : null)>
+      <svg class="icon appearance-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+      </svg>
+      <div class="appearance-controls nav-label">
+        <button class=`toggle-btn ${motif === "none" ? "active" : ""}` onClick() { applyMotif("none"); }>${t("nav.none")}</button>
+        <button class=`toggle-btn ${motif === "plant" ? "active" : ""}` onClick() { applyMotif("plant"); }>${t("nav.plant")}</button>
+      </div>
+    </div>
+
+    <!-- Language -->
+    <div class="appearance-row" title=(!expanded ? t("nav.language") : null)>
+      <svg class="icon appearance-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d=ICONS.globe/>
+      </svg>
+      <div class="appearance-controls nav-label">
+        <button class=`toggle-btn ${locale === "pl" ? "active" : ""}` onClick() { applyLang("pl"); }>${t("lang.pl")}</button>
+        <button class=`toggle-btn ${locale === "en" ? "active" : ""}` onClick() { applyLang("en"); }>${t("lang.en")}</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- User / Logout -->
+  <div class="nav-footer">
+    <div class="nav-user" title=(!expanded ? input.currentUser.name : null)>
+      <div class="avatar" aria-hidden="true">
+        ${input.currentUser.name.charAt(0).toUpperCase()}
+      </div>
+      <div class="nav-user-text">
+        <span class="nav-username">${input.currentUser.name}</span>
+        <span class="nav-email">${input.currentUser.email}</span>
+      </div>
+    </div>
+
+    <button
+      class="nav-item nav-logout"
+      title=(!expanded ? t("nav.logout") : null)
+      onClick() {
+        fetch("/api/auth/logout", { method: "POST" }).then(() => {
+          window.location.href = "/login";
+        });
+      }
+    >
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d=ICONS.logout/>
+      </svg>
+      <span class="nav-label">${t("nav.logout")}</span>
+    </button>
+  </div>
+</nav>
+
+<style>
+  /* ── Shell ──────────────────────────────────────────────────── */
+  .side-nav {
+    --nav-w: 56px;
+    --expand-dur: 0.22s;
+    --expand-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    width: var(--nav-w);
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--nav-bg);
+    border-right: 1px solid var(--nav-border);
+    transition:
+      width var(--expand-dur) var(--expand-ease),
+      background 0.2s,
+      border-color 0.2s;
+    z-index: 20;
+  }
+
+  .side-nav.is-expanded {
+    --nav-w: 220px;
+  }
+
+  /* ── Toggle button ──────────────────────────────────────────── */
+  .nav-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 16px;
+    height: 56px;
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--nav-border);
+    color: var(--nav-toggle-color);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .nav-toggle:hover {
+    color: var(--text);
+    background: var(--nav-hover-bg);
+  }
+
+  .brand-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--brand-text);
+  }
+
+  /* ── Nav list ───────────────────────────────────────────────── */
+  .nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem 0;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .nav-list li {
+    padding: 0 0.375rem;
+  }
+
+  /* ── Shared item style ──────────────────────────────────────── */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 12px;
+    height: 44px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .nav-item:hover {
+    background: var(--nav-hover-bg);
+    color: var(--nav-hover-text);
+  }
+
+  .nav-item.is-active {
+    background: var(--nav-active-bg);
+    color: var(--nav-active-text);
+  }
+
+  .nav-item.is-active .icon {
+    color: var(--nav-active-icon);
+  }
+
+  /* ── Icon ───────────────────────────────────────────────────── */
+  .icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  /* ── Labels (slide in/out) ──────────────────────────────────── */
+  .nav-label {
+    overflow: hidden;
+    max-width: 0;
+    opacity: 0;
+    font-size: 0.875rem;
+    transition:
+      max-width var(--expand-dur) var(--expand-ease),
+      opacity var(--expand-dur) var(--expand-ease);
+    white-space: nowrap;
+  }
+
+  .is-expanded .nav-label {
+    max-width: 160px;
+    opacity: 1;
+  }
+
+  /* ── Appearance controls ────────────────────────────────────── */
+  .appearance {
+    border-top: 1px solid var(--nav-border);
+    padding: 0.5rem 0.375rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .appearance-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 12px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  .appearance-icon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .appearance-controls {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .toggle-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 6px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .toggle-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .toggle-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* ── Footer: user info + logout ─────────────────────────────── */
+  .nav-footer {
+    border-top: 1px solid var(--nav-border);
+    padding: 0.5rem 0.375rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .nav-user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 12px;
+    height: 52px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--avatar-bg);
+    color: var(--avatar-text);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .nav-user-text {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-width: 0;
+    opacity: 0;
+    transition:
+      max-width var(--expand-dur) var(--expand-ease),
+      opacity var(--expand-dur) var(--expand-ease);
+  }
+
+  .is-expanded .nav-user-text {
+    max-width: 160px;
+    opacity: 1;
+  }
+
+  .nav-username {
+    font-size: 0.82rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-email {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-logout {
+    color: var(--text-muted);
+  }
+
+  .nav-logout:hover {
+    color: var(--logout-hover-text);
+    background: var(--logout-hover-bg);
+  }
+</style>
