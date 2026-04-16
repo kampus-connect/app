@@ -19,7 +19,13 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    level TEXT NOT NULL DEFAULT 'Beginner'
+    level TEXT NOT NULL DEFAULT 'Beginner',
+    learning INTEGER NOT NULL DEFAULT 0,
+    learning_note TEXT NOT NULL DEFAULT '',
+    teaching INTEGER NOT NULL DEFAULT 0,
+    teaching_note TEXT NOT NULL DEFAULT '',
+    doing INTEGER NOT NULL DEFAULT 0,
+    doing_note TEXT NOT NULL DEFAULT ''
   );
   CREATE TABLE IF NOT EXISTS sessions (
     token TEXT PRIMARY KEY,
@@ -39,6 +45,13 @@ try {
   db.exec("ALTER TABLE users ADD COLUMN password_hash TEXT NOT NULL DEFAULT ''");
 } catch { /* already exists */ }
 
+try { db.exec("ALTER TABLE skills ADD COLUMN learning INTEGER NOT NULL DEFAULT 0"); } catch { /* already exists */ }
+try { db.exec("ALTER TABLE skills ADD COLUMN learning_note TEXT NOT NULL DEFAULT ''"); } catch { /* already exists */ }
+try { db.exec("ALTER TABLE skills ADD COLUMN teaching INTEGER NOT NULL DEFAULT 0"); } catch { /* already exists */ }
+try { db.exec("ALTER TABLE skills ADD COLUMN teaching_note TEXT NOT NULL DEFAULT ''"); } catch { /* already exists */ }
+try { db.exec("ALTER TABLE skills ADD COLUMN doing INTEGER NOT NULL DEFAULT 0"); } catch { /* already exists */ }
+try { db.exec("ALTER TABLE skills ADD COLUMN doing_note TEXT NOT NULL DEFAULT ''"); } catch { /* already exists */ }
+
 // Give any pre-existing users (created before roles were added) the standard role
 {
   const orphans = db.prepare(
@@ -54,8 +67,23 @@ export interface Skill {
   id: number;
   user_id: number;
   name: string;
-  level: string;
+  learning: boolean;
+  learning_note: string;
+  teaching: boolean;
+  teaching_note: string;
+  doing: boolean;
+  doing_note: string;
 }
+
+export type SkillInput = {
+  name: string;
+  learning?: boolean;
+  learning_note?: string;
+  teaching?: boolean;
+  teaching_note?: string;
+  doing?: boolean;
+  doing_note?: string;
+};
 
 export interface User {
   id: number;
@@ -74,7 +102,33 @@ interface UserRow {
   created_at: string;
 }
 
+interface SkillRow {
+  id: number;
+  user_id: number;
+  name: string;
+  learning: number;
+  learning_note: string;
+  teaching: number;
+  teaching_note: string;
+  doing: number;
+  doing_note: string;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function rowToSkill(row: SkillRow): Skill {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    name: row.name,
+    learning: row.learning !== 0,
+    learning_note: row.learning_note ?? "",
+    teaching: row.teaching !== 0,
+    teaching_note: row.teaching_note ?? "",
+    doing: row.doing !== 0,
+    doing_note: row.doing_note ?? "",
+  };
+}
 
 function rowToUser(row: UserRow, skills: Skill[], roles: string[]): User {
   return { id: row.id, name: row.name, email: row.email, created_at: row.created_at, roles, skills };
@@ -99,7 +153,7 @@ function fetchRolesMap(): Map<number, string[]> {
 /** All users (for admin management — not filtered by role). */
 export function getAllUsers(): User[] {
   const users = db.prepare("SELECT * FROM users ORDER BY created_at DESC").all() as UserRow[];
-  const skills = db.prepare("SELECT * FROM skills").all() as Skill[];
+  const skills = (db.prepare("SELECT * FROM skills").all() as SkillRow[]).map(rowToSkill);
   const rolesMap = fetchRolesMap();
   return users.map((u) =>
     rowToUser(u, skills.filter((s) => s.user_id === u.id), rolesMap.get(u.id) ?? [])
@@ -118,7 +172,7 @@ export function getDashboardUsers(): User[] {
     ORDER BY u.created_at DESC
   `).all() as UserRow[];
   if (users.length === 0) return [];
-  const skills = db.prepare("SELECT * FROM skills").all() as Skill[];
+  const skills = (db.prepare("SELECT * FROM skills").all() as SkillRow[]).map(rowToSkill);
   return users.map((u) =>
     rowToUser(u, skills.filter((s) => s.user_id === u.id), ["standard"])
   );
@@ -127,7 +181,7 @@ export function getDashboardUsers(): User[] {
 export function getUserById(id: number): User | null {
   const row = db.prepare("SELECT * FROM users WHERE id = ?").get(id) as UserRow | undefined;
   if (!row) return null;
-  const skills = db.prepare("SELECT * FROM skills WHERE user_id = ?").all(id) as Skill[];
+  const skills = (db.prepare("SELECT * FROM skills WHERE user_id = ?").all(id) as SkillRow[]).map(rowToSkill);
   const roles = (db.prepare("SELECT role FROM user_roles WHERE user_id = ?").all(id) as { role: string }[]).map(
     (r) => r.role
   );
@@ -143,18 +197,26 @@ function _insertUser(
   name: string,
   email: string,
   passwordHash: string,
-  skills: { name: string; level: string }[],
+  skills: SkillInput[],
   roles: string[]
 ): User {
   const stmtUser = db.prepare("INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)");
-  const stmtSkill = db.prepare("INSERT INTO skills (user_id, name, level) VALUES (?, ?, ?)");
+  const stmtSkill = db.prepare(`
+    INSERT INTO skills (user_id, name, level, learning, learning_note, teaching, teaching_note, doing, doing_note)
+    VALUES (?, ?, 'Beginner', ?, ?, ?, ?, ?, ?)
+  `);
   const stmtRole = db.prepare("INSERT OR IGNORE INTO user_roles (user_id, role) VALUES (?, ?)");
 
   let userId!: number;
   db.transaction(() => {
     userId = stmtUser.run(name, email, passwordHash).lastInsertRowid as number;
     for (const skill of skills) {
-      if (skill.name.trim()) stmtSkill.run(userId, skill.name.trim(), skill.level);
+      if (skill.name.trim()) stmtSkill.run(
+        userId, skill.name.trim(),
+        skill.learning ? 1 : 0, skill.learning_note ?? "",
+        skill.teaching ? 1 : 0, skill.teaching_note ?? "",
+        skill.doing ? 1 : 0, skill.doing_note ?? ""
+      );
     }
     for (const role of roles) stmtRole.run(userId, role);
   })();
@@ -166,7 +228,7 @@ function _insertUser(
 export function createUser(
   name: string,
   email: string,
-  skills: { name: string; level: string }[]
+  skills: SkillInput[]
 ): User {
   return _insertUser(name, email, "", skills, ["standard"]);
 }
@@ -176,7 +238,7 @@ export function registerUser(
   name: string,
   email: string,
   passwordHash: string,
-  skills: { name: string; level: string }[]
+  skills: SkillInput[]
 ): User {
   return _insertUser(name, email, passwordHash, skills, ["standard"]);
 }
@@ -230,10 +292,28 @@ export function updatePassword(id: number, hash: string): void {
   db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(hash, id);
 }
 
-/** Adds a skill to a user's profile. Returns the new skill row. */
-export function addSkill(userId: number, name: string, level: string): Skill {
-  const result = db.prepare("INSERT INTO skills (user_id, name, level) VALUES (?, ?, ?)").run(userId, name.trim(), level);
-  return { id: result.lastInsertRowid as number, user_id: userId, name: name.trim(), level };
+/** Adds an activity to a user's profile. Returns the new skill row. */
+export function addSkill(userId: number, name: string, options: Omit<SkillInput, "name">): Skill {
+  const result = db.prepare(`
+    INSERT INTO skills (user_id, name, level, learning, learning_note, teaching, teaching_note, doing, doing_note)
+    VALUES (?, ?, 'Beginner', ?, ?, ?, ?, ?, ?)
+  `).run(
+    userId, name.trim(),
+    options.learning ? 1 : 0, options.learning_note ?? "",
+    options.teaching ? 1 : 0, options.teaching_note ?? "",
+    options.doing ? 1 : 0, options.doing_note ?? ""
+  );
+  return {
+    id: result.lastInsertRowid as number,
+    user_id: userId,
+    name: name.trim(),
+    learning: !!options.learning,
+    learning_note: options.learning_note ?? "",
+    teaching: !!options.teaching,
+    teaching_note: options.teaching_note ?? "",
+    doing: !!options.doing,
+    doing_note: options.doing_note ?? "",
+  };
 }
 
 /** Removes a skill by id, scoped to a specific user. Returns true if deleted. */
@@ -241,10 +321,18 @@ export function removeSkill(skillId: number, userId: number): boolean {
   return db.prepare("DELETE FROM skills WHERE id = ? AND user_id = ?").run(skillId, userId).changes > 0;
 }
 
-/** Updates an existing skill's name and level, scoped to a specific user. */
-export function updateSkill(skillId: number, userId: number, name: string, level: string): boolean {
-  return db.prepare("UPDATE skills SET name = ?, level = ? WHERE id = ? AND user_id = ?")
-    .run(name.trim(), level, skillId, userId).changes > 0;
+/** Updates an existing activity's name and options, scoped to a specific user. */
+export function updateSkill(skillId: number, userId: number, name: string, options: Omit<SkillInput, "name">): boolean {
+  return db.prepare(`
+    UPDATE skills SET name = ?, learning = ?, learning_note = ?, teaching = ?, teaching_note = ?, doing = ?, doing_note = ?
+    WHERE id = ? AND user_id = ?
+  `).run(
+    name.trim(),
+    options.learning ? 1 : 0, options.learning_note ?? "",
+    options.teaching ? 1 : 0, options.teaching_note ?? "",
+    options.doing ? 1 : 0, options.doing_note ?? "",
+    skillId, userId
+  ).changes > 0;
 }
 
 // ── Role management ───────────────────────────────────────────────────────────

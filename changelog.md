@@ -1,3 +1,30 @@
+● Build passes cleanly. Here's a summary of everything that changed:                                                                                                                          
+                                                                                          
+  Data model (db.ts):                                                                                                                                                                         
+  - Added 6 columns to skills table: learning, learning_note, teaching, teaching_note, doing, doing_note                                                                                      
+  - Auto-migrations so existing DBs are upgraded                                                                                                                                              
+  - Skill interface now has the 3 boolean options + note strings (no more level)                                                                                                              
+  - Exported SkillInput type for use across the codebase                                                                                                                                      
+                                                                                                                                                                                              
+  API handlers — all 4 skill-related endpoints now accept/return the new format instead of level                                                                                              
+                                                                                                                                                                                              
+  Translations (both EN + PL):                                                                                                                                                                
+  - "Skills" → "Activities" / "Aktywności" everywhere                                                                                                                                         
+  - New keys: relatedOptions, learning, teaching, doing, notePlaceholder                                                                                                                      
+                                                                                                                                                                                            
+  Profile page (/profile):                                                                                                                                                                    
+  - Activities section rebuilt with a vertical edit form: name input + 3 checkboxes, each expanding a textarea when checked                                                                 
+  - Display shows activity name + colored option tags (e.g., "Learn it", "Doing it") and notes inline                                                                                         
+                                                                                                                                                                                            
+  Register + Create User pages:                                                                                                                                                               
+  - Activity entries now show checkboxes instead of a level dropdown                                                                                                                          
+  - Each checkbox expands a note textarea when checked                                                                                                                                        
+                                                                                                                                                                                              
+  User card:                                                                                                                                                                                  
+  - Replaced colored level badges with activity name + small option tags showing which of the 3 options are active   
+
+
+
 ● Good. The structure is correct — searchQ and displayedSkills are now scoped inside the <if=allSkillsWithCounts.length> block (which is itself inside <if=activeSkill === null>). Every time 
   the user navigates back to the skill grid, both consts are freshly created, re-establishing their reactive subscriptions to searchQuery from scratch.
                                                                                           

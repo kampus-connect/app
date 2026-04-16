@@ -12,7 +12,7 @@ export async function POST(context: { request: Request }) {
     name?: string;
     email?: string;
     password?: string;
-    skills?: { name: string; level: string }[];
+    skills?: { name: string; learning?: boolean; learning_note?: string; teaching?: boolean; teaching_note?: string; doing?: boolean; doing_note?: string }[];
   };
 
   try {

@@ -17,7 +17,7 @@ export async function POST(context: { request: Request }) {
   const auth = requireAdmin(context.request);
   if (auth instanceof Response) return auth;
 
-  let body: { name?: string; email?: string; skills?: { name: string; level: string }[] };
+  let body: { name?: string; email?: string; skills?: { name: string; learning?: boolean; learning_note?: string; teaching?: boolean; teaching_note?: string; doing?: boolean; doing_note?: string }[] };
   try {
     body = await context.request.json() as typeof body;
   } catch {

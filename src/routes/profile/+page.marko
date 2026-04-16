@@ -26,13 +26,23 @@
 <let/pwSuccess=false>
 
 <!-- ── Skills state ──────────────────────────────────────────────── -->
-<let/skills=(user?.skills ?? []) as { id: number; name: string; level: string }[]>
+<let/skills=(user?.skills ?? []) as { id: number; name: string; learning: boolean; learning_note: string; teaching: boolean; teaching_note: string; doing: boolean; doing_note: string }[]>
 <let/editingId=(null as number | null)>
 <let/editName="" as string>
-<let/editLevel="Beginner" as string>
+<let/editLearning=false as boolean>
+<let/editLearningNote="" as string>
+<let/editTeaching=false as boolean>
+<let/editTeachingNote="" as string>
+<let/editDoing=false as boolean>
+<let/editDoingNote="" as string>
 <let/addingSkill=false>
 <let/newSkillName="" as string>
-<let/newSkillLevel="Beginner" as string>
+<let/newLearning=false as boolean>
+<let/newLearningNote="" as string>
+<let/newTeaching=false as boolean>
+<let/newTeachingNote="" as string>
+<let/newDoing=false as boolean>
+<let/newDoingNote="" as string>
 <let/skillError="" as string>
 
 <!-- ── Helpers ───────────────────────────────────────────────────── -->
@@ -46,11 +56,6 @@
   setTimeout(() => { pwSuccess = false; }, 3000);
 }>
 
-<const/levelColor={
-  Beginner:     "var(--skill-beginner)",
-  Intermediate: "var(--skill-intermediate)",
-  Advanced:     "var(--skill-advanced)",
-}>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <div class="page">
@@ -212,7 +217,7 @@
     </form>
   </section>
 
-  <!-- ── Skills ────────────────────────────────────────────────── -->
+  <!-- ── Activities ───────────────────────────────────────────── -->
   <section class="card">
     <h2 class="section-title">${t("profile.skills")}</h2>
 
@@ -227,62 +232,142 @@
     <div class="skill-list">
       <for|skill| of=skills>
         <if=editingId === skill.id>
-          <div class="skill-edit-row">
+          <!-- Edit form -->
+          <div class="activity-edit-block">
             <input
               type="text"
               value=editName
               class="skill-name-input"
               onInput(e) { editName = (e.target as HTMLInputElement).value; }
             />
-            <select
-              class="skill-level-select"
-              onChange(e) { editLevel = (e.target as HTMLSelectElement).value; }
-            >
-              <option value="Beginner" selected=(editLevel === "Beginner")>${t("skills.beginner")}</option>
-              <option value="Intermediate" selected=(editLevel === "Intermediate")>${t("skills.intermediate")}</option>
-              <option value="Advanced" selected=(editLevel === "Advanced")>${t("skills.advanced")}</option>
-            </select>
-            <button
-              type="button"
-              class="btn-save"
-              onClick() {
-                const name = editName.trim();
-                if (!name) return;
-                fetch(`/api/profile/skills/${skill.id}`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ name, level: editLevel }),
-                })
-                  .then((r) => r.json())
-                  .then((d: any) => {
-                    if (d.error) { skillError = d.error; return; }
-                    skills = skills.map((s) =>
-                      s.id === skill.id ? { ...s, name: d.name, level: d.level } : s
-                    );
-                    editingId = null;
-                    skillError = "";
+
+            <div class="options-section">
+              <span class="options-label">${t("skills.relatedOptions")}</span>
+
+              <div class="option-group">
+                <label class="option-check">
+                  <input
+                    type="checkbox"
+                    checked=editLearning
+                    onChange(e) { editLearning = (e.target as HTMLInputElement).checked; }
+                  />
+                  ${t("skills.learning")}
+                </label>
+                <if=editLearning>
+                  <textarea
+                    class="option-note"
+                    placeholder=t("skills.notePlaceholder")
+                    onInput(e) { editLearningNote = (e.target as HTMLTextAreaElement).value; }
+                  >${editLearningNote}</textarea>
+                </if>
+              </div>
+
+              <div class="option-group">
+                <label class="option-check">
+                  <input
+                    type="checkbox"
+                    checked=editTeaching
+                    onChange(e) { editTeaching = (e.target as HTMLInputElement).checked; }
+                  />
+                  ${t("skills.teaching")}
+                </label>
+                <if=editTeaching>
+                  <textarea
+                    class="option-note"
+                    placeholder=t("skills.notePlaceholder")
+                    onInput(e) { editTeachingNote = (e.target as HTMLTextAreaElement).value; }
+                  >${editTeachingNote}</textarea>
+                </if>
+              </div>
+
+              <div class="option-group">
+                <label class="option-check">
+                  <input
+                    type="checkbox"
+                    checked=editDoing
+                    onChange(e) { editDoing = (e.target as HTMLInputElement).checked; }
+                  />
+                  ${t("skills.doing")}
+                </label>
+                <if=editDoing>
+                  <textarea
+                    class="option-note"
+                    placeholder=t("skills.notePlaceholder")
+                    onInput(e) { editDoingNote = (e.target as HTMLTextAreaElement).value; }
+                  >${editDoingNote}</textarea>
+                </if>
+              </div>
+            </div>
+
+            <div class="edit-footer">
+              <button
+                type="button"
+                class="btn-save"
+                onClick() {
+                  const name = editName.trim();
+                  if (!name) return;
+                  fetch(`/api/profile/skills/${skill.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      name,
+                      learning: editLearning, learning_note: editLearningNote,
+                      teaching: editTeaching, teaching_note: editTeachingNote,
+                      doing: editDoing, doing_note: editDoingNote,
+                    }),
                   })
-                  .catch(() => { skillError = t("profile.error"); });
-              }
-            >
-              ${t("profile.save")}
-            </button>
-            <button
-              type="button"
-              class="btn-cancel"
-              onClick() { editingId = null; }
-            >
-              ${t("profile.cancel")}
-            </button>
+                    .then((r) => r.json())
+                    .then((d: any) => {
+                      if (d.error) { skillError = d.error; return; }
+                      skills = skills.map((s) =>
+                        s.id === skill.id ? { ...s, name: d.name, learning: d.learning, learning_note: d.learning_note, teaching: d.teaching, teaching_note: d.teaching_note, doing: d.doing, doing_note: d.doing_note } : s
+                      );
+                      editingId = null;
+                      skillError = "";
+                    })
+                    .catch(() => { skillError = t("profile.error"); });
+                }
+              >
+                ${t("profile.save")}
+              </button>
+              <button
+                type="button"
+                class="btn-cancel"
+                onClick() { editingId = null; }
+              >
+                ${t("profile.cancel")}
+              </button>
+            </div>
           </div>
         </if>
         <else>
-          <div class="skill-row">
-            <const/color=levelColor[skill.level as keyof typeof levelColor] ?? "var(--text-muted)">
-            <span class="skill-badge" style=`--color: ${color}`>
-              ${skill.name}
-              <em>${t(`skills.${skill.level.toLowerCase() as "beginner" | "intermediate" | "advanced"}`)}</em>
-            </span>
+          <!-- Display row -->
+          <div class="activity-row">
+            <div class="activity-info">
+              <span class="activity-name">${skill.name}</span>
+              <if=skill.learning || skill.teaching || skill.doing>
+                <div class="activity-opts">
+                  <if=skill.learning>
+                    <span class="opt-tag">${t("skills.learning")}</span>
+                    <if=skill.learning_note>
+                      <span class="opt-note">${skill.learning_note}</span>
+                    </if>
+                  </if>
+                  <if=skill.teaching>
+                    <span class="opt-tag">${t("skills.teaching")}</span>
+                    <if=skill.teaching_note>
+                      <span class="opt-note">${skill.teaching_note}</span>
+                    </if>
+                  </if>
+                  <if=skill.doing>
+                    <span class="opt-tag">${t("skills.doing")}</span>
+                    <if=skill.doing_note>
+                      <span class="opt-note">${skill.doing_note}</span>
+                    </if>
+                  </if>
+                </div>
+              </if>
+            </div>
             <div class="skill-actions">
               <button
                 type="button"
@@ -290,7 +375,12 @@
                 onClick() {
                   editingId = skill.id;
                   editName = skill.name;
-                  editLevel = skill.level;
+                  editLearning = skill.learning;
+                  editLearningNote = skill.learning_note;
+                  editTeaching = skill.teaching;
+                  editTeachingNote = skill.teaching_note;
+                  editDoing = skill.doing;
+                  editDoingNote = skill.doing_note;
                   addingSkill = false;
                 }
               >
@@ -321,7 +411,8 @@
     </div>
 
     <if=addingSkill>
-      <div class="skill-edit-row add-row">
+      <!-- Add form -->
+      <div class="activity-edit-block add-block">
         <input
           type="text"
           placeholder=t("skills.placeholder")
@@ -329,50 +420,112 @@
           class="skill-name-input"
           onInput(e) { newSkillName = (e.target as HTMLInputElement).value; }
         />
-        <select
-          class="skill-level-select"
-          onChange(e) { newSkillLevel = (e.target as HTMLSelectElement).value; }
-        >
-          <option value="Beginner" selected=(newSkillLevel === "Beginner")>${t("skills.beginner")}</option>
-          <option value="Intermediate" selected=(newSkillLevel === "Intermediate")>${t("skills.intermediate")}</option>
-          <option value="Advanced" selected=(newSkillLevel === "Advanced")>${t("skills.advanced")}</option>
-        </select>
-        <button
-          type="button"
-          class="btn-save"
-          onClick() {
-            const name = newSkillName.trim();
-            if (!name) return;
-            fetch("/api/profile/skills", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name, level: newSkillLevel }),
-            })
-              .then((r) => r.json())
-              .then((d: any) => {
-                if (d.error) { skillError = d.error; return; }
-                skills = [...skills, d];
-                addingSkill = false;
-                newSkillName = "";
-                newSkillLevel = "Beginner";
-                skillError = "";
+
+        <div class="options-section">
+          <span class="options-label">${t("skills.relatedOptions")}</span>
+
+          <div class="option-group">
+            <label class="option-check">
+              <input
+                type="checkbox"
+                checked=newLearning
+                onChange(e) { newLearning = (e.target as HTMLInputElement).checked; }
+              />
+              ${t("skills.learning")}
+            </label>
+            <if=newLearning>
+              <textarea
+                class="option-note"
+                placeholder=t("skills.notePlaceholder")
+                onInput(e) { newLearningNote = (e.target as HTMLTextAreaElement).value; }
+              >${newLearningNote}</textarea>
+            </if>
+          </div>
+
+          <div class="option-group">
+            <label class="option-check">
+              <input
+                type="checkbox"
+                checked=newTeaching
+                onChange(e) { newTeaching = (e.target as HTMLInputElement).checked; }
+              />
+              ${t("skills.teaching")}
+            </label>
+            <if=newTeaching>
+              <textarea
+                class="option-note"
+                placeholder=t("skills.notePlaceholder")
+                onInput(e) { newTeachingNote = (e.target as HTMLTextAreaElement).value; }
+              >${newTeachingNote}</textarea>
+            </if>
+          </div>
+
+          <div class="option-group">
+            <label class="option-check">
+              <input
+                type="checkbox"
+                checked=newDoing
+                onChange(e) { newDoing = (e.target as HTMLInputElement).checked; }
+              />
+              ${t("skills.doing")}
+            </label>
+            <if=newDoing>
+              <textarea
+                class="option-note"
+                placeholder=t("skills.notePlaceholder")
+                onInput(e) { newDoingNote = (e.target as HTMLTextAreaElement).value; }
+              >${newDoingNote}</textarea>
+            </if>
+          </div>
+        </div>
+
+        <div class="edit-footer">
+          <button
+            type="button"
+            class="btn-save"
+            onClick() {
+              const name = newSkillName.trim();
+              if (!name) return;
+              fetch("/api/profile/skills", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  name,
+                  learning: newLearning, learning_note: newLearningNote,
+                  teaching: newTeaching, teaching_note: newTeachingNote,
+                  doing: newDoing, doing_note: newDoingNote,
+                }),
               })
-              .catch(() => { skillError = t("profile.error"); });
-          }
-        >
-          ${t("profile.saveSkill")}
-        </button>
-        <button
-          type="button"
-          class="btn-cancel"
-          onClick() {
-            addingSkill = false;
-            newSkillName = "";
-            newSkillLevel = "Beginner";
-          }
-        >
-          ${t("profile.cancel")}
-        </button>
+                .then((r) => r.json())
+                .then((d: any) => {
+                  if (d.error) { skillError = d.error; return; }
+                  skills = [...skills, d];
+                  addingSkill = false;
+                  newSkillName = "";
+                  newLearning = false; newLearningNote = "";
+                  newTeaching = false; newTeachingNote = "";
+                  newDoing = false; newDoingNote = "";
+                  skillError = "";
+                })
+                .catch(() => { skillError = t("profile.error"); });
+            }
+          >
+            ${t("profile.saveSkill")}
+          </button>
+          <button
+            type="button"
+            class="btn-cancel"
+            onClick() {
+              addingSkill = false;
+              newSkillName = "";
+              newLearning = false; newLearningNote = "";
+              newTeaching = false; newTeachingNote = "";
+              newDoing = false; newDoingNote = "";
+            }
+          >
+            ${t("profile.cancel")}
+          </button>
+        </div>
       </div>
     </if>
 
@@ -507,7 +660,7 @@
     font-size: 0.875rem;
   }
 
-  /* ── Skills section ──────────────────────────────────────────── */
+  /* ── Activities section ──────────────────────────────────────── */
   .empty-text {
     margin: 0 0 1rem;
     color: var(--text-muted);
@@ -517,60 +670,145 @@
   .skill-list {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
     margin-bottom: 0.75rem;
   }
 
-  .skill-row {
+  .activity-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 0.75rem;
-    padding: 0.3rem 0;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
   }
 
-  .skill-edit-row {
-    display: grid;
-    grid-template-columns: 1fr auto auto auto;
-    gap: 0.5rem;
-    align-items: center;
-    padding: 0.3rem 0;
+  .activity-row:last-child {
+    border-bottom: none;
   }
 
-  .add-row {
+  .activity-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .activity-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .activity-opts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem;
+  }
+
+  .opt-tag {
+    display: inline-block;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .opt-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ── Activity edit block ─────────────────────────────────────── */
+  .activity-edit-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    border-radius: 8px;
     margin-bottom: 0.5rem;
+  }
+
+  .add-block {
+    margin-bottom: 0.75rem;
   }
 
   .skill-name-input {
     min-width: 0;
   }
 
-  .skill-level-select {
-    width: auto !important;
+  .options-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .options-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .option-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .option-check input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }
+
+  .option-note {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 3rem;
+    margin-left: 1.5rem;
+  }
+
+  .option-note:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .edit-footer {
+    display: flex;
+    gap: 0.5rem;
   }
 
   .skill-actions {
     display: flex;
     gap: 0.4rem;
     flex-shrink: 0;
-  }
-
-  .skill-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    border: 1px solid color-mix(in srgb, var(--color) 40%, transparent);
-    background: color-mix(in srgb, var(--color) 12%, transparent);
-    color: var(--color);
-  }
-
-  .skill-badge em {
-    font-style: normal;
-    font-size: 0.7rem;
-    opacity: 0.7;
   }
 
   .btn-sm {

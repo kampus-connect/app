@@ -1,8 +1,6 @@
 import { removeSkill, updateSkill } from "../../../../../lib/db.js";
 import { getAuthInfo } from "../../../../../lib/guard.js";
 
-const VALID_LEVELS = ["Beginner", "Intermediate", "Advanced"];
-
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
@@ -17,7 +15,7 @@ export function DELETE(context: { request: Request; params: { id: string } }) {
   if (isNaN(id)) return json({ error: "Invalid ID" }, 400);
 
   const deleted = removeSkill(id, auth.userId);
-  if (!deleted) return json({ error: "Skill not found" }, 404);
+  if (!deleted) return json({ error: "Activity not found" }, 404);
 
   return json({ success: true });
 }
@@ -29,7 +27,15 @@ export async function PATCH(context: { request: Request; params: { id: string } 
   const id = parseInt(context.params.id, 10);
   if (isNaN(id)) return json({ error: "Invalid ID" }, 400);
 
-  let body: { name?: string; level?: string };
+  let body: {
+    name?: string;
+    learning?: boolean;
+    learning_note?: string;
+    teaching?: boolean;
+    teaching_note?: string;
+    doing?: boolean;
+    doing_note?: string;
+  };
   try {
     body = await context.request.json() as typeof body;
   } catch {
@@ -37,13 +43,19 @@ export async function PATCH(context: { request: Request; params: { id: string } 
   }
 
   const name = body.name?.trim();
-  const level = body.level ?? "Beginner";
+  if (!name) return json({ error: "Activity name is required" }, 400);
 
-  if (!name) return json({ error: "Skill name is required" }, 400);
-  if (!VALID_LEVELS.includes(level)) return json({ error: "Invalid skill level" }, 400);
+  const options = {
+    learning: !!body.learning,
+    learning_note: body.learning_note ?? "",
+    teaching: !!body.teaching,
+    teaching_note: body.teaching_note ?? "",
+    doing: !!body.doing,
+    doing_note: body.doing_note ?? "",
+  };
 
-  const updated = updateSkill(id, auth.userId, name, level);
-  if (!updated) return json({ error: "Skill not found" }, 404);
+  const updated = updateSkill(id, auth.userId, name, options);
+  if (!updated) return json({ error: "Activity not found" }, 404);
 
-  return json({ id, user_id: auth.userId, name, level });
+  return json({ id, user_id: auth.userId, name, ...options });
 }

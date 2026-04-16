@@ -4,7 +4,7 @@ export interface Input {
     name: string;
     email: string;
     roles: string[];
-    skills: { id: number; name: string; level: string }[];
+    skills: { id: number; name: string; learning: boolean; learning_note: string; teaching: boolean; teaching_note: string; doing: boolean; doing_note: string }[];
   };
   isAdmin: boolean;
 }
@@ -21,11 +21,6 @@ export interface Input {
 
 <const/user=input.user>
 <const/isAdmin=input.isAdmin>
-<const/levelColor={
-  Beginner:     "var(--skill-beginner)",
-  Intermediate: "var(--skill-intermediate)",
-  Advanced:     "var(--skill-advanced)",
-}>
 
 <div class="user-card">
   <div class="user-meta">
@@ -41,12 +36,16 @@ export interface Input {
   <div class="skills">
     <if=user.skills.length>
       <for|skill| of=user.skills>
-        <const/color=levelColor[skill.level as keyof typeof levelColor] ?? "var(--text-muted)">
-        <const/levelLabel=t(`skills.${skill.level.toLowerCase() as "beginner" | "intermediate" | "advanced"}`)>
-        <span class="skill-badge" style=`--color: ${color}`>
-          ${skill.name}
-          <em>${levelLabel}</em>
-        </span>
+        <div class="activity-item">
+          <span class="activity-name">${skill.name}</span>
+          <if=skill.learning || skill.teaching || skill.doing>
+            <div class="activity-opts">
+              <if=skill.learning><span class="opt-tag">${t("skills.learning")}</span></if>
+              <if=skill.teaching><span class="opt-tag">${t("skills.teaching")}</span></if>
+              <if=skill.doing><span class="opt-tag">${t("skills.doing")}</span></if>
+            </div>
+          </if>
+        </div>
       </for>
     </if>
     <else>
@@ -163,27 +162,38 @@ export interface Input {
 
   .skills {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 0.4rem;
     min-height: 1.5rem;
   }
 
-  .skill-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    border: 1px solid color-mix(in srgb, var(--color) 40%, transparent);
-    background: color-mix(in srgb, var(--color) 12%, transparent);
-    color: var(--color);
+  .activity-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
   }
 
-  .skill-badge em {
-    font-style: normal;
+  .activity-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .activity-opts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .opt-tag {
+    display: inline-block;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 999px;
+    padding: 0.05rem 0.4rem;
     font-size: 0.7rem;
-    opacity: 0.7;
+    font-weight: 500;
   }
 
   .no-skills {
