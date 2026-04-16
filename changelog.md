@@ -1,4 +1,27 @@
-
+● Here's what was implemented:                          
+                                                                                          
+  Search bar — full-width input with a magnifier icon and an × clear button (appears only when there's text). Escape also clears the query.                                                   
+                                                                                                                                                                                              
+  Three-tier matching with priority ranking:                                                                                                                                                  
+                                                                                                                                                                                              
+  ┌───────┬────────────────────────────────┬──────────────────────────────────────────────────┐                                                                                               
+  │ Score │              Rule              │               Example: query "py"                │                                                                                               
+  ├───────┼────────────────────────────────┼──────────────────────────────────────────────────┤                                                                                               
+  │ 3     │ Starts with                    │ Python                                           │                                                                                               
+  ├───────┼────────────────────────────────┼──────────────────────────────────────────────────┤
+  │ 2     │ Substring (includes)           │ Copy                                             │
+  ├───────┼────────────────────────────────┼──────────────────────────────────────────────────┤                                                                                               
+  │ 1     │ Subsequence (letters in order) │ Symfony (s-ym-fon-y... wait — p then y in order) │
+  ├───────┼────────────────────────────────┼──────────────────────────────────────────────────┤                                                                                               
+  │ 0     │ No match                       │ hidden                                           │
+  └───────┴────────────────────────────────┴──────────────────────────────────────────────────┘                                                                                               
+                                                            
+  Results are sorted by score descending, then by user count descending within each tier.                                                                                                     
+   
+  Character-level highlighting — matched characters render with the accent color and a subtle underline. For substring matches the whole matched run is highlighted; for subsequence matches  
+  each individually matched character is highlighted, so you can see exactly why a result appeared.
+                                                                                                                                                                                              
+  No-results state — when the query matches nothing a message is shown with a "Clear search" button.        
 
 
 

@@ -26,7 +26,10 @@
     "searchSkills": "Search skills (min. 3 characters)…",
     "noMatchingSkills": "No matching skills",
     "allSkills": "All Skills",
-    "userCount": "{count} users"
+    "userCount": "{count} users",
+    "searchTags": "Search skills…",
+    "noSkillsFound": "No skills match your search.",
+    "clearSearch": "Clear search"
   },
   "card": {
     "noSkills": "No skills yet",

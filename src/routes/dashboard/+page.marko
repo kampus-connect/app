@@ -13,6 +13,55 @@
 <const/allSkillsWithCounts=($global as any).allSkillsWithCounts ?? []>
 
 <let/activeSkill=(null as string | null)>
+<let/searchQuery="">
+
+<!-- Score: 3 = starts-with, 2 = substring, 1 = subsequence, 0 = no match -->
+<const/matchScore=(name: string, q: string): number => {
+  if (!q) return 2;
+  const n = name.toLowerCase();
+  if (n.startsWith(q)) return 3;
+  if (n.includes(q)) return 2;
+  let qi = 0;
+  for (let i = 0; i < n.length && qi < q.length; i++) if (n[i] === q[qi]) qi++;
+  return qi === q.length ? 1 : 0;
+}>
+
+<!-- Split name into highlighted / plain segments for rendering -->
+<const/highlightParts=(name: string, q: string): { text: string; hi: boolean }[] => {
+  if (!q) return [{ text: name, hi: false }];
+  const n = name.toLowerCase();
+
+  const idx = n.indexOf(q);
+  if (idx !== -1) {
+    const parts: { text: string; hi: boolean }[] = [];
+    if (idx > 0) parts.push({ text: name.slice(0, idx), hi: false });
+    parts.push({ text: name.slice(idx, idx + q.length), hi: true });
+    if (idx + q.length < name.length) parts.push({ text: name.slice(idx + q.length), hi: false });
+    return parts;
+  }
+
+  // Subsequence: highlight each matched character individually
+  const parts: { text: string; hi: boolean }[] = [];
+  let qi = 0;
+  let buf = "";
+  let lastHi = false;
+  for (let i = 0; i < name.length; i++) {
+    const matched = qi < q.length && n[i] === q[qi];
+    if (matched) qi++;
+    if (matched !== lastHi && buf.length) { parts.push({ text: buf, hi: lastHi }); buf = ""; }
+    buf += name[i];
+    lastHi = matched;
+  }
+  if (buf) parts.push({ text: buf, hi: lastHi });
+  return parts;
+}>
+
+<const/searchQ=searchQuery.toLowerCase().trim()>
+
+<const/displayedSkills=(allSkillsWithCounts as { name: string; count: number }[])
+  .map((s) => ({ ...s, score: matchScore(s.name, searchQ) }))
+  .filter((s) => s.score > 0)
+  .sort((a, b) => b.score - a.score || b.count - a.count)>
 
 <const/skillUsers=activeSkill
   ? (users as any[]).filter((u) => u.skills.some((sk: any) => sk.name === activeSkill))
@@ -27,22 +76,71 @@
     </header>
 
     <if=allSkillsWithCounts.length>
-      <div class="skill-grid">
-        <for|skill| of=allSkillsWithCounts>
-          <button class="skill-card" onClick() { activeSkill = skill.name; }>
-            <span class="skill-name">${skill.name}</span>
-            <span class="skill-count">
-              ${t("dashboard.userCount", { count: String(skill.count) })}
-            </span>
+      <!-- Search bar -->
+      <div class="search-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input
+          class="search-input"
+          type="text"
+          placeholder=t("dashboard.searchTags")
+          value=searchQuery
+          autocomplete="off"
+          spellcheck=false
+          onInput(e) { searchQuery = (e.target as HTMLInputElement).value; }
+          onKeyDown(e) { if (e.key === "Escape") searchQuery = ""; }
+        />
+        <if=searchQuery>
+          <button
+            class="search-clear"
+            aria-label="Clear search"
+            onClick() { searchQuery = ""; }
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
           </button>
-        </for>
+        </if>
       </div>
+
+      <!-- Skill cards -->
+      <if=displayedSkills.length>
+        <div class="skill-grid">
+          <for|skill| of=displayedSkills>
+            <button class="skill-card" onClick() { activeSkill = skill.name; }>
+              <span class="skill-name">
+                <for|part| of=highlightParts(skill.name, searchQ)>
+                  <if=part.hi>
+                    <mark class="hl">${part.text}</mark>
+                  </if>
+                  <else>
+                    ${part.text}
+                  </else>
+                </for>
+              </span>
+              <span class="skill-count">
+                ${t("dashboard.userCount", { count: String(skill.count) })}
+              </span>
+            </button>
+          </for>
+        </div>
+      </if>
+      <else>
+        <div class="empty-state">
+          <p>${t("dashboard.noSkillsFound")}</p>
+          <button class="clear-search-btn" onClick() { searchQuery = ""; }>
+            ${t("dashboard.clearSearch")}
+          </button>
+        </div>
+      </else>
     </if>
     <else>
       <div class="empty-state">
         <p>${t("dashboard.noUsers")}</p>
         <if=isAdmin>
-          <a href="/users/create" class="btn-primary">${t("dashboard.addFirst")}</a>
+          <a href="/users/create" class="btn-add">${t("dashboard.addFirst")}</a>
         </if>
       </div>
     </else>
@@ -94,7 +192,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
   }
 
   .header-left {
@@ -135,14 +233,67 @@
     transition: color 0.15s;
   }
 
-  .back-btn:hover {
-    color: var(--accent);
+  .back-btn:hover { color: var(--accent); }
+  .back-btn svg { width: 14px; height: 14px; }
+
+  /* ── Search bar ──────────────────────────────────────────────── */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 1.25rem;
   }
 
-  .back-btn svg {
-    width: 14px;
-    height: 14px;
+  .search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--text-dim);
+    pointer-events: none;
   }
+
+  .search-input {
+    width: 100%;
+    padding: 0.6rem 2.5rem 0.6rem 2.25rem;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .search-input::placeholder { color: var(--text-dim); }
+
+  .search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+
+  .search-clear {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: var(--border);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0;
+    transition: background 0.12s, color 0.12s;
+  }
+
+  .search-clear:hover { background: var(--surface-hover); color: var(--text); }
+  .search-clear svg { width: 10px; height: 10px; }
 
   /* ── Skill grid ──────────────────────────────────────────────── */
   .skill-grid {
@@ -180,6 +331,16 @@
     text-overflow: ellipsis;
   }
 
+  /* Highlight matched characters */
+  .hl {
+    background: transparent;
+    color: var(--accent);
+    font-style: normal;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--accent) 50%, transparent);
+    text-underline-offset: 2px;
+  }
+
   .skill-count {
     font-size: 0.78rem;
     color: var(--accent);
@@ -193,7 +354,7 @@
     gap: 1rem;
   }
 
-  /* ── Empty state ─────────────────────────────────────────────── */
+  /* ── Empty / no-results state ────────────────────────────────── */
   .empty-state {
     text-align: center;
     padding: 4rem 2rem;
@@ -204,4 +365,34 @@
     gap: 1rem;
   }
 
+  .clear-search-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .clear-search-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .btn-add {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.15s;
+  }
+
+  .btn-add:hover { background: var(--accent-hover); color: #fff; }
 </style>

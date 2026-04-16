@@ -26,7 +26,10 @@
     "searchSkills": "Szukaj umiejętności (min. 3 znaki)…",
     "noMatchingSkills": "Brak pasujących umiejętności",
     "allSkills": "Wszystkie umiejętności",
-    "userCount": "{count} os."
+    "userCount": "{count} os.",
+    "searchTags": "Szukaj umiejętności…",
+    "noSkillsFound": "Brak umiejętności pasujących do wyszukiwania.",
+    "clearSearch": "Wyczyść wyszukiwanie"
   },
   "card": {
     "noSkills": "Brak umiejętności",
