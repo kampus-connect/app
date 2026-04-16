@@ -1,3 +1,68 @@
+● Clean build. Here's what was built and how the system is designed for extension:                                                                                                            
+                                                                                                                                                                                              
+  ---                                                                                                                                                                                         
+  Extension pattern — adding a new badge requires exactly 3 touches:                                                                                                                          
+                                                                                                                                                                                              
+  1. src/lib/db.ts → computeBadges() — add one SQL query and one badges.push(...):                                                                                                            
+  const myCount = (db.prepare("SELECT COUNT(*) AS cnt FROM ...").get(userId) as {cnt:number}).cnt;                                                                                            
+  badges.push({ id: "mybadge", value: myCount, tier: tier(myCount) });                                                                                                                        
+  2. src/routes/profile/+page.marko → BADGE_DEFS — add one object with icon path and translation keys:                                                                                        
+  { id: "mybadge", icon: "M...", nameKey: "badges.mybadge.name", descKey: "badges.mybadge.desc", unit: "" }                                                                                   
+  3. en.json + pl.json — add "badges.mybadge.name" and "badges.mybadge.desc"                                                                                                                  
+                                                                                                                                                                                              
+  ---                                                                                                                                                                                         
+  The 3 initial badges:                                                                                                                                                                       
+                                                                                                                                                                                              
+  ┌──────────┬───────────────────────────────────────────────────┬──────────────────────────────────────────────┐
+  │  Badge   │                  What it counts                   │                    Tiers                     │                                                                             
+  ├──────────┼───────────────────────────────────────────────────┼──────────────────────────────────────────────┤
+  │ Teacher  │ Unique people who joined your created initiatives │ Bronze ≥1, Silver ≥3, Gold ≥10, Platinum ≥20 │
+  ├──────────┼───────────────────────────────────────────────────┼──────────────────────────────────────────────┤
+  │ Learner  │ Completed initiatives you joined (not yours)      │ same thresholds                              │                                                                             
+  ├──────────┼───────────────────────────────────────────────────┼──────────────────────────────────────────────┤                                                                             
+  │ Meetings │ Total initiatives participated in (any role)      │ same thresholds                              │                                                                             
+  └──────────┴───────────────────────────────────────────────────┴──────────────────────────────────────────────┘                                                                             
+                                                            
+  Profile section shows a responsive grid of badge cards — each card displays the count as a large number, the tier as a coloured pill (bronze/silver/gold/platinum), and a description.      
+  Unearned badges show a 0 in muted text with a "Not yet earned" pill, so the section always looks intentional even for new users.
+
+
+
+
+
+
+● Clean build. Everything is registered. Here's a full summary of what was built:                                                                                                             
+                                                                                          
+  ---                                                                                                                                                                                         
+  New database tables (db.ts):                                                                                                                                                                
+  - initiatives — title, description, max_users, created_by, active flag, created_at                                                                                                          
+  - initiative_skills — many-to-many: initiative ↔ activity names                                                                                                                             
+  - initiative_participants — many-to-many: initiative ↔ users, with join timestamp                                                                                                           
+                                                                                                                                                                                              
+  New DB functions: getActiveInitiatives, getCompletedInitiativesForUser, createInitiative, joinInitiative, leaveInitiative                                                                   
+                                                                                                                                                                                              
+  New API routes:                                                                                                                                                                             
+  - GET/POST /api/initiatives — list active + create new                                                                                                                                      
+  - POST /api/initiatives/[id]/join — take part (auto-deactivates when full)                                                                                                                  
+  - DELETE /api/initiatives/[id]/join — leave (only while still active)     
+                                                                                                                                                                                              
+  New page /iniciatives:                                                                                                                                                                      
+  - Lists all active initiatives as cards with title, description, related activities, a fill-bar showing X/max participants                                                                  
+  - "Take part" button — turns into a "Joined ✓" button (hover to leave)                                                                                                                      
+  - "Create initiative" form: title, description, max participants, activity picker (chips from existing activity names)
+  - Cards marked with "yours" badge when you're the creator                                                                                                                                   
+  - When joining fills the last slot, the card disappears from the list immediately (now completed)                                                                                           
+                                                                                                                                                                                              
+  Side nav: New "Initiatives" item between Dashboard and Profile, with a clipboard icon                                                                                                       
+                                                                                                                                                                                              
+  Dashboard (/dashboard): Completed initiatives where the current user participated are pinned as compact cards at the top of the grid view, with a left accent border to distinguish them    
+  from the activity grid  
+
+
+
+
+
+
 ● Done. The truncation happens in dashboard/+handler.ts before the data is serialised and sent to the browser — so "Anna Kowalska" becomes "Anna K." in the server response, and "Kowalska"   
   never appears anywhere in the HTML, JSON, or SSR output. The template just renders whatever name it receives and has no knowledge of the original.   
 

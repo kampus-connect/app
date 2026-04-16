@@ -1,4 +1,4 @@
-import { getAllSkillsWithCounts, getDashboardUsers, getSession, getUserById, hasRole } from "../../lib/db.js";
+import { getAllSkillsWithCounts, getCompletedInitiativesForUser, getDashboardUsers, getSession, getUserById, hasRole } from "../../lib/db.js";
 import { parseCookies } from "../../lib/auth.js";
 import { injectI18n } from "../../lib/i18n.js";
 
@@ -22,5 +22,6 @@ export function GET(context: Record<string, unknown>, next: () => Promise<Respon
     return { ...u, name: surnameInitial ? `${firstName} ${surnameInitial}` : firstName };
   });
   context["allSkillsWithCounts"] = getAllSkillsWithCounts();
+  context["completedInitiatives"] = getCompletedInitiativesForUser(session.user_id);
   return next();
 }

@@ -37,6 +37,26 @@ db.exec(`
     role TEXT NOT NULL CHECK(role IN ('admin', 'standard')),
     PRIMARY KEY (user_id, role)
   );
+  CREATE TABLE IF NOT EXISTS initiatives (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    max_users INTEGER NOT NULL DEFAULT 5,
+    created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS initiative_skills (
+    initiative_id INTEGER NOT NULL REFERENCES initiatives(id) ON DELETE CASCADE,
+    skill_name TEXT NOT NULL,
+    PRIMARY KEY (initiative_id, skill_name)
+  );
+  CREATE TABLE IF NOT EXISTS initiative_participants (
+    initiative_id INTEGER NOT NULL REFERENCES initiatives(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (initiative_id, user_id)
+  );
 `);
 
 // ── Migrations ────────────────────────────────────────────────────────────────
@@ -333,6 +353,183 @@ export function updateSkill(skillId: number, userId: number, name: string, optio
     options.doing ? 1 : 0, options.doing_note ?? "",
     skillId, userId
   ).changes > 0;
+}
+
+// ── Initiatives ───────────────────────────────────────────────────────────────
+
+export interface Initiative {
+  id: number;
+  title: string;
+  description: string;
+  max_users: number;
+  created_by: number;
+  active: boolean;
+  created_at: string;
+  skills: string[];
+  participant_count: number;
+  is_participant: boolean;
+}
+
+function attachInitiativeMeta(
+  rows: { id: number; title: string; description: string; max_users: number; created_by: number; active: number; created_at: string }[],
+  userId: number
+): Initiative[] {
+  if (rows.length === 0) return [];
+  const skillRows = db.prepare(
+    `SELECT initiative_id, skill_name FROM initiative_skills WHERE initiative_id IN (${rows.map(() => "?").join(",")})`,
+  ).all(...rows.map((r) => r.id)) as { initiative_id: number; skill_name: string }[];
+  const countRows = db.prepare(
+    `SELECT initiative_id, COUNT(*) as cnt FROM initiative_participants WHERE initiative_id IN (${rows.map(() => "?").join(",")}) GROUP BY initiative_id`,
+  ).all(...rows.map((r) => r.id)) as { initiative_id: number; cnt: number }[];
+  const partRows = db.prepare(
+    `SELECT initiative_id FROM initiative_participants WHERE user_id = ? AND initiative_id IN (${rows.map(() => "?").join(",")})`,
+  ).all(userId, ...rows.map((r) => r.id)) as { initiative_id: number }[];
+
+  const skillsMap = new Map<number, string[]>();
+  for (const s of skillRows) {
+    const list = skillsMap.get(s.initiative_id) ?? [];
+    list.push(s.skill_name);
+    skillsMap.set(s.initiative_id, list);
+  }
+  const countMap = new Map(countRows.map((c) => [c.initiative_id, c.cnt]));
+  const partSet = new Set(partRows.map((p) => p.initiative_id));
+
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    max_users: r.max_users,
+    created_by: r.created_by,
+    active: r.active !== 0,
+    created_at: r.created_at,
+    skills: skillsMap.get(r.id) ?? [],
+    participant_count: countMap.get(r.id) ?? 0,
+    is_participant: partSet.has(r.id),
+  }));
+}
+
+export function getActiveInitiatives(userId: number): Initiative[] {
+  const rows = db.prepare(
+    "SELECT * FROM initiatives WHERE active = 1 ORDER BY created_at DESC"
+  ).all() as any[];
+  return attachInitiativeMeta(rows, userId);
+}
+
+export function getCompletedInitiativesForUser(userId: number): Initiative[] {
+  const rows = db.prepare(`
+    SELECT i.* FROM initiatives i
+    INNER JOIN initiative_participants p ON p.initiative_id = i.id AND p.user_id = ?
+    WHERE i.active = 0
+    ORDER BY i.created_at DESC
+  `).all(userId) as any[];
+  return attachInitiativeMeta(rows, userId);
+}
+
+export function createInitiative(
+  title: string,
+  description: string,
+  maxUsers: number,
+  createdBy: number,
+  skills: string[]
+): Initiative {
+  const stmtInit = db.prepare(
+    "INSERT INTO initiatives (title, description, max_users, created_by) VALUES (?, ?, ?, ?)"
+  );
+  const stmtSkill = db.prepare(
+    "INSERT OR IGNORE INTO initiative_skills (initiative_id, skill_name) VALUES (?, ?)"
+  );
+  let id!: number;
+  db.transaction(() => {
+    id = stmtInit.run(title, description, maxUsers, createdBy).lastInsertRowid as number;
+    for (const s of skills) if (s.trim()) stmtSkill.run(id, s.trim());
+  })();
+  return attachInitiativeMeta(
+    [db.prepare("SELECT * FROM initiatives WHERE id = ?").get(id) as any],
+    createdBy
+  )[0];
+}
+
+export function joinInitiative(
+  initiativeId: number,
+  userId: number
+): { initiative: Initiative } | null {
+  const init = db.prepare("SELECT * FROM initiatives WHERE id = ?").get(initiativeId) as any;
+  if (!init || !init.active) return null;
+
+  db.prepare(
+    "INSERT OR IGNORE INTO initiative_participants (initiative_id, user_id) VALUES (?, ?)"
+  ).run(initiativeId, userId);
+
+  const count = (db.prepare(
+    "SELECT COUNT(*) as cnt FROM initiative_participants WHERE initiative_id = ?"
+  ).get(initiativeId) as { cnt: number }).cnt;
+
+  if (count >= init.max_users) {
+    db.prepare("UPDATE initiatives SET active = 0 WHERE id = ?").run(initiativeId);
+  }
+
+  return { initiative: attachInitiativeMeta([db.prepare("SELECT * FROM initiatives WHERE id = ?").get(initiativeId) as any], userId)[0] };
+}
+
+// ── Badges ────────────────────────────────────────────────────────────────────
+
+export type BadgeTier = "none" | "bronze" | "silver" | "gold" | "platinum";
+
+export interface BadgeValue {
+  id: string;
+  value: number;
+  tier: BadgeTier;
+}
+
+function tier(value: number): BadgeTier {
+  if (value >= 20) return "platinum";
+  if (value >= 10) return "gold";
+  if (value >= 3)  return "silver";
+  if (value >= 1)  return "bronze";
+  return "none";
+}
+
+/**
+ * Compute all badge values for a user.
+ * To add a new badge: add one query + one push() here, add translation keys,
+ * add one entry to BADGE_DEFS in the profile page.
+ */
+export function computeBadges(userId: number): BadgeValue[] {
+  const badges: BadgeValue[] = [];
+
+  // Teacher — unique users who joined initiatives created by this user (excl. self)
+  const taught = (db.prepare(`
+    SELECT COUNT(DISTINCT p.user_id) AS cnt
+    FROM initiative_participants p
+    INNER JOIN initiatives i ON i.id = p.initiative_id AND i.created_by = ?
+    WHERE p.user_id != ?
+  `).get(userId, userId) as { cnt: number }).cnt;
+  badges.push({ id: "teacher", value: taught, tier: tier(taught) });
+
+  // Learner — completed initiatives joined by this user where they were not the creator
+  const learned = (db.prepare(`
+    SELECT COUNT(*) AS cnt
+    FROM initiative_participants p
+    INNER JOIN initiatives i ON i.id = p.initiative_id
+    WHERE p.user_id = ? AND i.created_by != ? AND i.active = 0
+  `).get(userId, userId) as { cnt: number }).cnt;
+  badges.push({ id: "learner", value: learned, tier: tier(learned) });
+
+  // Meeting — total initiatives this user has participated in (any role, any state)
+  const meetings = (db.prepare(`
+    SELECT COUNT(*) AS cnt FROM initiative_participants WHERE user_id = ?
+  `).get(userId) as { cnt: number }).cnt;
+  badges.push({ id: "meeting", value: meetings, tier: tier(meetings) });
+
+  return badges;
+}
+
+export function leaveInitiative(initiativeId: number, userId: number): boolean {
+  const init = db.prepare("SELECT active FROM initiatives WHERE id = ?").get(initiativeId) as { active: number } | undefined;
+  if (!init || !init.active) return false;
+  return db.prepare(
+    "DELETE FROM initiative_participants WHERE initiative_id = ? AND user_id = ?"
+  ).run(initiativeId, userId).changes > 0;
 }
 
 // ── Role management ───────────────────────────────────────────────────────────

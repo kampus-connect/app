@@ -9,6 +9,32 @@
 }>
 
 <const/user=($global as any).currentUser>
+<const/badgeValues=(($global as any).badges ?? []) as { id: string; value: number; tier: string }[]>
+
+<!-- Badge metadata — add a new entry here + a DB query in computeBadges() to create a badge -->
+<const/BADGE_DEFS=[
+  {
+    id: "teacher",
+    icon: "M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222",
+    nameKey: "badges.teacher.name",
+    descKey: "badges.teacher.desc",
+    unit: "",
+  },
+  {
+    id: "learner",
+    icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
+    nameKey: "badges.learner.name",
+    descKey: "badges.learner.desc",
+    unit: "",
+  },
+  {
+    id: "meeting",
+    icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
+    nameKey: "badges.meeting.name",
+    descKey: "badges.meeting.desc",
+    unit: "",
+  },
+] as { id: string; icon: string; nameKey: string; descKey: string; unit: string }[]>
 
 <!-- ── Personal info state ────────────────────────────────────────── -->
 <let/infoName=(user?.name ?? "") as string>
@@ -215,6 +241,33 @@
         </button>
       </div>
     </form>
+  </section>
+
+  <!-- ── Achievements ─────────────────────────────────────────── -->
+  <section class="card">
+    <h2 class="section-title">${t("badges.sectionTitle")}</h2>
+    <div class="badges-grid">
+      <for|def| of=BADGE_DEFS>
+        <const/badge=badgeValues.find((b) => b.id === def.id)>
+        <const/value=badge?.value ?? 0>
+        <const/tier=badge?.tier ?? "none">
+        <div class=`badge-card tier-${tier}`>
+          <div class="badge-icon-wrap">
+            <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d=def.icon/>
+            </svg>
+          </div>
+          <div class="badge-body">
+            <div class="badge-top">
+              <span class="badge-name">${t(def.nameKey)}</span>
+              <span class=`badge-tier-pill tier-pill-${tier}`>${t(`badges.tier.${tier}`)}</span>
+            </div>
+            <span class="badge-value">${value}</span>
+            <p class="badge-desc">${t(def.descKey)}</p>
+          </div>
+        </div>
+      </for>
+    </div>
   </section>
 
   <!-- ── Activities ───────────────────────────────────────────── -->
@@ -887,5 +940,115 @@
   .btn-add-skill:hover {
     border-color: var(--accent);
     color: var(--accent);
+  }
+
+  /* ── Achievements ────────────────────────────────────────────── */
+  :root {
+    --tier-bronze:   #c97c2e;
+    --tier-silver:   #94a3b8;
+    --tier-gold:     #d97706;
+    --tier-platinum: #7c6af6;
+  }
+
+  .badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .badge-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 1rem;
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: border-color 0.15s;
+  }
+
+  .badge-card.tier-bronze   { border-color: color-mix(in srgb, var(--tier-bronze)   35%, var(--border)); }
+  .badge-card.tier-silver   { border-color: color-mix(in srgb, var(--tier-silver)   35%, var(--border)); }
+  .badge-card.tier-gold     { border-color: color-mix(in srgb, var(--tier-gold)     50%, var(--border)); }
+  .badge-card.tier-platinum { border-color: color-mix(in srgb, var(--tier-platinum) 60%, var(--border)); }
+
+  .badge-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .badge-card.tier-bronze   .badge-icon-wrap { background: color-mix(in srgb, var(--tier-bronze)   15%, transparent); }
+  .badge-card.tier-silver   .badge-icon-wrap { background: color-mix(in srgb, var(--tier-silver)   15%, transparent); }
+  .badge-card.tier-gold     .badge-icon-wrap { background: color-mix(in srgb, var(--tier-gold)     15%, transparent); }
+  .badge-card.tier-platinum .badge-icon-wrap { background: color-mix(in srgb, var(--tier-platinum) 15%, transparent); }
+
+  .badge-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--text-dim);
+  }
+
+  .badge-card.tier-bronze   .badge-icon { color: var(--tier-bronze);   }
+  .badge-card.tier-silver   .badge-icon { color: var(--tier-silver);   }
+  .badge-card.tier-gold     .badge-icon { color: var(--tier-gold);     }
+  .badge-card.tier-platinum .badge-icon { color: var(--tier-platinum); }
+
+  .badge-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .badge-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+  }
+
+  .badge-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .badge-tier-pill {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-radius: 999px;
+    padding: 0.1rem 0.4rem;
+    white-space: nowrap;
+    background: var(--border);
+    color: var(--text-dim);
+  }
+
+  .tier-pill-bronze   { background: color-mix(in srgb, var(--tier-bronze)   15%, transparent); color: var(--tier-bronze);   }
+  .tier-pill-silver   { background: color-mix(in srgb, var(--tier-silver)   15%, transparent); color: var(--tier-silver);   }
+  .tier-pill-gold     { background: color-mix(in srgb, var(--tier-gold)     15%, transparent); color: var(--tier-gold);     }
+  .tier-pill-platinum { background: color-mix(in srgb, var(--tier-platinum) 15%, transparent); color: var(--tier-platinum); }
+
+  .badge-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .badge-card.tier-none .badge-value { color: var(--text-dim); }
+
+  .badge-desc {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.4;
   }
 </style>

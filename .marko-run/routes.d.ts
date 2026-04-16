@@ -14,6 +14,8 @@ declare module "@marko/run" {
 			"/api/auth/login": { verb: "post"; };
 			"/api/auth/logout": { verb: "post"; };
 			"/api/auth/register": { verb: "post"; };
+			"/api/initiatives": { verb: "get" | "post"; };
+			"/api/initiatives/[id]/join": { verb: "post"; };
 			"/api/lang": { verb: "post"; };
 			"/api/profile": { verb: ; };
 			"/api/profile/password": { verb: "post"; };
@@ -23,6 +25,7 @@ declare module "@marko/run" {
 			"/api/users/[id]": { verb: ; };
 			"/api/users/[id]/roles": { verb: ; };
 			"/dashboard": { verb: "get"; meta: typeof import("../src/routes/dashboard/+meta.json"); };
+			"/iniciatives": { verb: "get"; meta: typeof import("../src/routes/iniciatives/+meta.json"); };
 			"/login": { verb: "get"; meta: typeof import("../src/routes/login/+meta.json"); };
 			"/profile": { verb: "get"; meta: typeof import("../src/routes/profile/+meta.json"); };
 			"/register": { verb: "get"; meta: typeof import("../src/routes/register/+meta.json"); };
@@ -91,6 +94,42 @@ declare module "../src/routes/api/auth/register/+handler" {
   namespace MarkoRun {
     export { NotHandled, NotMatched, GetPaths, PostPaths, GetablePath, GetableHref, PostablePath, PostableHref, Platform };
     export type Route = Run.Routes["/api/auth/register"];
+    export type Context = Run.MultiRouteContext<Route>;
+    export type Handler = Run.HandlerLike<Route>;
+    export type GET = Run.HandlerLike<Route, "GET">;
+    export type HEAD = Run.HandlerLike<Route, "HEAD">;
+    export type POST = Run.HandlerLike<Route, "POST">;
+    export type PUT = Run.HandlerLike<Route, "PUT">;
+    export type DELETE = Run.HandlerLike<Route, "DELETE">;
+    export type PATCH = Run.HandlerLike<Route, "PATCH">;
+    export type OPTIONS = Run.HandlerLike<Route, "OPTIONS">;
+    /** @deprecated use `((context, next) => { ... }) satisfies MarkoRun.Handler` instead */
+    export const route: Run.HandlerTypeFn<Route>;
+  }
+}
+
+declare module "../src/routes/api/initiatives/+handler" {
+  namespace MarkoRun {
+    export { NotHandled, NotMatched, GetPaths, PostPaths, GetablePath, GetableHref, PostablePath, PostableHref, Platform };
+    export type Route = Run.Routes["/api/initiatives"];
+    export type Context = Run.MultiRouteContext<Route>;
+    export type Handler = Run.HandlerLike<Route>;
+    export type GET = Run.HandlerLike<Route, "GET">;
+    export type HEAD = Run.HandlerLike<Route, "HEAD">;
+    export type POST = Run.HandlerLike<Route, "POST">;
+    export type PUT = Run.HandlerLike<Route, "PUT">;
+    export type DELETE = Run.HandlerLike<Route, "DELETE">;
+    export type PATCH = Run.HandlerLike<Route, "PATCH">;
+    export type OPTIONS = Run.HandlerLike<Route, "OPTIONS">;
+    /** @deprecated use `((context, next) => { ... }) satisfies MarkoRun.Handler` instead */
+    export const route: Run.HandlerTypeFn<Route>;
+  }
+}
+
+declare module "../src/routes/api/initiatives/[id]/join/+handler" {
+  namespace MarkoRun {
+    export { NotHandled, NotMatched, GetPaths, PostPaths, GetablePath, GetableHref, PostablePath, PostableHref, Platform };
+    export type Route = Run.Routes["/api/initiatives/[id]/join"];
     export type Context = Run.MultiRouteContext<Route>;
     export type Handler = Run.HandlerLike<Route>;
     export type GET = Run.HandlerLike<Route, "GET">;
@@ -267,6 +306,24 @@ declare module "../src/routes/dashboard/+handler" {
   }
 }
 
+declare module "../src/routes/iniciatives/+handler" {
+  namespace MarkoRun {
+    export { NotHandled, NotMatched, GetPaths, PostPaths, GetablePath, GetableHref, PostablePath, PostableHref, Platform };
+    export type Route = Run.Routes["/iniciatives"];
+    export type Context = Run.MultiRouteContext<Route>;
+    export type Handler = Run.HandlerLike<Route>;
+    export type GET = Run.HandlerLike<Route, "GET">;
+    export type HEAD = Run.HandlerLike<Route, "HEAD">;
+    export type POST = Run.HandlerLike<Route, "POST">;
+    export type PUT = Run.HandlerLike<Route, "PUT">;
+    export type DELETE = Run.HandlerLike<Route, "DELETE">;
+    export type PATCH = Run.HandlerLike<Route, "PATCH">;
+    export type OPTIONS = Run.HandlerLike<Route, "OPTIONS">;
+    /** @deprecated use `((context, next) => { ... }) satisfies MarkoRun.Handler` instead */
+    export const route: Run.HandlerTypeFn<Route>;
+  }
+}
+
 declare module "../src/routes/login/+handler" {
   namespace MarkoRun {
     export { NotHandled, NotMatched, GetPaths, PostPaths, GetablePath, GetableHref, PostablePath, PostableHref, Platform };
@@ -393,6 +450,24 @@ declare module "../src/routes/dashboard/+page.marko" {
   }
 }
 
+declare module "../src/routes/iniciatives/+page.marko" {
+  namespace MarkoRun {
+    export { NotHandled, NotMatched, GetPaths, PostPaths, GetablePath, GetableHref, PostablePath, PostableHref, Platform };
+    export type Route = Run.Routes["/iniciatives"];
+    export type Context = Run.MultiRouteContext<Route> & Marko.Global;
+    export type Handler = Run.HandlerLike<Route>;
+    export type GET = Run.HandlerLike<Route, "GET">;
+    export type HEAD = Run.HandlerLike<Route, "HEAD">;
+    export type POST = Run.HandlerLike<Route, "POST">;
+    export type PUT = Run.HandlerLike<Route, "PUT">;
+    export type DELETE = Run.HandlerLike<Route, "DELETE">;
+    export type PATCH = Run.HandlerLike<Route, "PATCH">;
+    export type OPTIONS = Run.HandlerLike<Route, "OPTIONS">;
+    /** @deprecated use `((context, next) => { ... }) satisfies MarkoRun.Handler` instead */
+    export const route: Run.HandlerTypeFn<Route>;
+  }
+}
+
 declare module "../src/routes/login/+page.marko" {
   namespace MarkoRun {
     export { NotHandled, NotMatched, GetPaths, PostPaths, GetablePath, GetableHref, PostablePath, PostableHref, Platform };
@@ -505,7 +580,7 @@ declare module "../src/routes/+layout.marko" {
   export interface Input extends Run.LayoutInput<typeof import("../src/routes/+layout.marko")> {}
   namespace MarkoRun {
     export { NotHandled, NotMatched, GetPaths, PostPaths, GetablePath, GetableHref, PostablePath, PostableHref, Platform };
-    export type Route = Run.Routes["/" | "/dashboard" | "/login" | "/profile" | "/register" | "/settings" | "/test" | "/users/create"];
+    export type Route = Run.Routes["/" | "/dashboard" | "/iniciatives" | "/login" | "/profile" | "/register" | "/settings" | "/test" | "/users/create"];
     export type Context = Run.MultiRouteContext<Route> & Marko.Global;
     export type Handler = Run.HandlerLike<Route>;
     export type GET = Run.HandlerLike<Route, "GET">;

@@ -11,6 +11,10 @@
 <const/users=($global as any).users ?? []>
 <const/isAdmin=($global as any).isAdmin ?? false>
 <const/allSkillsWithCounts=($global as any).allSkillsWithCounts ?? []>
+<const/completedInitiatives=(($global as any).completedInitiatives ?? []) as {
+  id: number; title: string; description: string; max_users: number;
+  skills: string[]; participant_count: number;
+}[]>
 
 <let/activeSkill=(null as string | null)>
 <let/searchQuery="">
@@ -67,6 +71,31 @@
     <header class="page-header">
       <h1>${t("dashboard.title")}</h1>
     </header>
+
+    <!-- ── Pinned completed initiatives ──────────────────────── -->
+    <if=completedInitiatives.length>
+      <section class="pinned-section">
+        <h2 class="pinned-title">${t("dashboard.pinnedInitiatives")}</h2>
+        <div class="pinned-grid">
+          <for|init| of=completedInitiatives>
+            <div class="pinned-card">
+              <h3 class="pinned-card-title">${init.title}</h3>
+              <p class="pinned-card-desc">${init.description}</p>
+              <if=init.skills.length>
+                <div class="pinned-skills">
+                  <for|s| of=init.skills>
+                    <span class="pinned-skill-tag">${s}</span>
+                  </for>
+                </div>
+              </if>
+              <span class="pinned-participants">
+                ${t("dashboard.initiativeParticipants", { count: String(init.participant_count) })}
+              </span>
+            </div>
+          </for>
+        </div>
+      </section>
+    </if>
 
     <if=allSkillsWithCounts.length>
       <!-- Computed inside this block so reactive tracking is fresh on every remount -->
@@ -438,6 +467,78 @@
     color: var(--text-muted);
     line-height: 1.45;
     padding-left: 0.25rem;
+  }
+
+  /* ── Pinned initiatives ──────────────────────────────────────── */
+  .pinned-section {
+    margin-bottom: 2rem;
+  }
+
+  .pinned-title {
+    margin: 0 0 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-dim);
+  }
+
+  .pinned-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .pinned-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .pinned-card-title {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .pinned-card-desc {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .pinned-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.1rem;
+  }
+
+  .pinned-skill-tag {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.05rem 0.4rem;
+  }
+
+  .pinned-participants {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 0.15rem;
   }
 
   /* ── Empty / no-results state ────────────────────────────────── */

@@ -13,7 +13,8 @@
     "plant": "Roślinny",
     "language": "Język",
     "admin": "Admin",
-    "addUser": "Dodaj użytkownika"
+    "addUser": "Dodaj użytkownika",
+    "initiatives": "Inicjatywy"
   },
   "dashboard": {
     "title": "Pulpit",
@@ -29,7 +30,9 @@
     "userCount": "{count} os.",
     "searchTags": "Szukaj aktywności…",
     "noSkillsFound": "Brak aktywności pasujących do wyszukiwania.",
-    "clearSearch": "Wyczyść wyszukiwanie"
+    "clearSearch": "Wyczyść wyszukiwanie",
+    "pinnedInitiatives": "Twoje zakończone inicjatywy",
+    "initiativeParticipants": "{count} uczestników"
   },
   "card": {
     "noSkills": "Brak aktywności",
@@ -126,6 +129,40 @@
     "language": "Język",
     "interfaceLang": "Język interfejsu",
     "interfaceLangDesc": "Strona zostanie przeładowana po zmianie"
+  },
+  "badges": {
+    "sectionTitle": "Osiągnięcia",
+    "teacher.name": "Nauczyciel",
+    "teacher.desc": "Osoby, które dołączyły do Twoich inicjatyw",
+    "learner.name": "Uczący się",
+    "learner.desc": "Ukończone inicjatywy, do których dołączyłeś",
+    "meeting.name": "Spotkania",
+    "meeting.desc": "Łączna liczba inicjatyw, w których uczestniczyłeś",
+    "tier.none": "Jeszcze nie zdobyto",
+    "tier.bronze": "Brąz",
+    "tier.silver": "Srebro",
+    "tier.gold": "Złoto",
+    "tier.platinum": "Platyna"
+  },
+  "initiatives": {
+    "title": "Inicjatywy",
+    "create": "Utwórz inicjatywę",
+    "cancel": "Anuluj",
+    "titleLabel": "Tytuł",
+    "descriptionLabel": "Opis",
+    "maxUsers": "Maks. liczba uczestników",
+    "relatedActivities": "Powiązane aktywności",
+    "save": "Utwórz",
+    "saving": "Tworzenie…",
+    "participants": "{count} / {max} uczestników",
+    "join": "Dołącz",
+    "joined": "Dołączyłeś",
+    "leave": "Opuść",
+    "full": "Pełne",
+    "completed": "Zakończone",
+    "noActive": "Brak aktywnych inicjatyw. Bądź pierwszym, który ją utworzy!",
+    "error": "Coś poszło nie tak. Spróbuj ponownie.",
+    "yourOwn": "twoja"
   },
   "lang": {
     "pl": "Polski",

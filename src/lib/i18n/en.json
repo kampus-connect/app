@@ -13,7 +13,8 @@
     "plant": "Plant",
     "language": "Language",
     "admin": "Admin",
-    "addUser": "Add User"
+    "addUser": "Add User",
+    "initiatives": "Initiatives"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -29,7 +30,9 @@
     "userCount": "{count} users",
     "searchTags": "Search activities…",
     "noSkillsFound": "No activities match your search.",
-    "clearSearch": "Clear search"
+    "clearSearch": "Clear search",
+    "pinnedInitiatives": "Your completed initiatives",
+    "initiativeParticipants": "{count} participants"
   },
   "card": {
     "noSkills": "No activities yet",
@@ -126,6 +129,40 @@
     "language": "Language",
     "interfaceLang": "Interface language",
     "interfaceLangDesc": "Page will reload to apply the change"
+  },
+  "badges": {
+    "sectionTitle": "Achievements",
+    "teacher.name": "Teacher",
+    "teacher.desc": "People who joined initiatives you created",
+    "learner.name": "Learner",
+    "learner.desc": "Completed initiatives you joined to learn",
+    "meeting.name": "Meetings",
+    "meeting.desc": "Total initiatives you have participated in",
+    "tier.none": "Not yet earned",
+    "tier.bronze": "Bronze",
+    "tier.silver": "Silver",
+    "tier.gold": "Gold",
+    "tier.platinum": "Platinum"
+  },
+  "initiatives": {
+    "title": "Initiatives",
+    "create": "Create initiative",
+    "cancel": "Cancel",
+    "titleLabel": "Title",
+    "descriptionLabel": "Description",
+    "maxUsers": "Max participants",
+    "relatedActivities": "Related activities",
+    "save": "Create",
+    "saving": "Creating…",
+    "participants": "{count} / {max} participants",
+    "join": "Take part",
+    "joined": "Joined",
+    "leave": "Leave",
+    "full": "Full",
+    "completed": "Completed",
+    "noActive": "No active initiatives yet. Be the first to create one!",
+    "error": "Something went wrong. Please try again.",
+    "yourOwn": "yours"
   },
   "lang": {
     "pl": "Polski",
