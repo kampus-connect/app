@@ -1,0 +1,415 @@
+<const/tr=($global as any).translations ?? {}>
+<const/t=(key: string, params?: Record<string, string>): string => {
+  const dot = key.indexOf(".");
+  const s = key.slice(0, dot);
+  const k = key.slice(dot + 1);
+  let v: string = (tr[s] as Record<string, string>)?.[k] ?? key;
+  if (params) for (const [p, r] of Object.entries(params)) v = v.replaceAll(`{${p}}`, r);
+  return v;
+}>
+
+<let/name=""/>
+<let/email=""/>
+<let/skills=[{ name: "", learning: false, learning_note: "", teaching: false, teaching_note: "", doing: false, doing_note: "" }]/>
+<let/errorMsg=""/>
+<let/loading=false/>
+
+<div class="page">
+  <a href="/dashboard" class="back-link">${t("createUser.back")}</a>
+  <h1>${t("createUser.title")}</h1>
+
+  <if=errorMsg>
+    <div class="error-banner">${errorMsg}</div>
+  </if>
+
+  <form
+    class="form"
+    onSubmit(e) {
+      e.preventDefault();
+      loading = true;
+      errorMsg = "";
+      fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          skills: skills.filter((s) => s.name.trim()),
+        }),
+      })
+        .then((r) => r.json())
+        .then((data: any) => {
+          if (data.error) {
+            errorMsg = data.error;
+            loading = false;
+          } else {
+            window.location.href = "/dashboard";
+          }
+        })
+        .catch(() => {
+          errorMsg = t("createUser.error");
+          loading = false;
+        });
+    }
+  >
+    <div class="field">
+      <label for="name">${t("createUser.name")}</label>
+      <input
+        id="name"
+        type="text"
+        placeholder="Alice Johnson"
+        value=name
+        required
+        onInput(e) { name = (e.target as HTMLInputElement).value }
+      />
+    </div>
+
+    <div class="field">
+      <label for="email">${t("createUser.email")}</label>
+      <input
+        id="email"
+        type="email"
+        placeholder="alice@example.com"
+        value=email
+        required
+        onInput(e) { email = (e.target as HTMLInputElement).value }
+      />
+    </div>
+
+    <fieldset class="skills-section">
+      <legend>${t("skills.label")} <span class="hint">${t("skills.optional")}</span></legend>
+
+      <for|skill, index| of=skills>
+        <div class="skill-entry">
+          <div class="skill-entry-header">
+            <input
+              type="text"
+              placeholder=t("skills.placeholder")
+              value=skill.name
+              onInput(e) {
+                const val = (e.target as HTMLInputElement).value;
+                skills = skills.map((s, i) => (i === index ? { ...s, name: val } : s));
+              }
+            />
+            <if=skills.length > 1>
+              <button
+                type="button"
+                class="btn-remove"
+                onClick() { skills = skills.filter((_, i) => i !== index) }
+              >
+                ✕
+              </button>
+            </if>
+          </div>
+
+          <div class="options-section">
+            <span class="options-label">${t("skills.relatedOptions")}</span>
+
+            <div class="option-group">
+              <label class="option-check">
+                <input
+                  type="checkbox"
+                  checked=skill.learning
+                  onChange(e) {
+                    const val = (e.target as HTMLInputElement).checked;
+                    skills = skills.map((s, i) => (i === index ? { ...s, learning: val } : s));
+                  }
+                />
+                ${t("skills.learning")}
+              </label>
+              <if=skill.learning>
+                <textarea
+                  class="option-note"
+                  placeholder=t("skills.notePlaceholder")
+                  onInput(e) {
+                    const val = (e.target as HTMLTextAreaElement).value;
+                    skills = skills.map((s, i) => (i === index ? { ...s, learning_note: val } : s));
+                  }
+                >${skill.learning_note}</textarea>
+              </if>
+            </div>
+
+            <div class="option-group">
+              <label class="option-check">
+                <input
+                  type="checkbox"
+                  checked=skill.teaching
+                  onChange(e) {
+                    const val = (e.target as HTMLInputElement).checked;
+                    skills = skills.map((s, i) => (i === index ? { ...s, teaching: val } : s));
+                  }
+                />
+                ${t("skills.teaching")}
+              </label>
+              <if=skill.teaching>
+                <textarea
+                  class="option-note"
+                  placeholder=t("skills.notePlaceholder")
+                  onInput(e) {
+                    const val = (e.target as HTMLTextAreaElement).value;
+                    skills = skills.map((s, i) => (i === index ? { ...s, teaching_note: val } : s));
+                  }
+                >${skill.teaching_note}</textarea>
+              </if>
+            </div>
+
+            <div class="option-group">
+              <label class="option-check">
+                <input
+                  type="checkbox"
+                  checked=skill.doing
+                  onChange(e) {
+                    const val = (e.target as HTMLInputElement).checked;
+                    skills = skills.map((s, i) => (i === index ? { ...s, doing: val } : s));
+                  }
+                />
+                ${t("skills.doing")}
+              </label>
+              <if=skill.doing>
+                <textarea
+                  class="option-note"
+                  placeholder=t("skills.notePlaceholder")
+                  onInput(e) {
+                    const val = (e.target as HTMLTextAreaElement).value;
+                    skills = skills.map((s, i) => (i === index ? { ...s, doing_note: val } : s));
+                  }
+                >${skill.doing_note}</textarea>
+              </if>
+            </div>
+          </div>
+        </div>
+      </for>
+
+      <button
+        type="button"
+        class="btn-add-skill"
+        onClick() { skills = [...skills, { name: "", learning: false, learning_note: "", teaching: false, teaching_note: "", doing: false, doing_note: "" }] }
+      >
+        ${t("skills.add")}
+      </button>
+    </fieldset>
+
+    <button type="submit" class="btn-primary" disabled=loading>
+      ${loading ? t("createUser.submitting") : t("createUser.submit")}
+    </button>
+  </form>
+</div>
+
+<style>
+  .page {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.15s;
+  }
+
+  .back-link:hover {
+    color: var(--text);
+  }
+
+  h1 {
+    margin: 0 0 1.5rem;
+    font-size: 1.5rem;
+    color: var(--text);
+  }
+
+  .error-banner {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: var(--error-text);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  label, legend {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .hint {
+    color: var(--text-dim);
+    font-weight: normal;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  select {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.95rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+
+  input:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .skills-section {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .skill-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .skill-entry:last-of-type {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .skill-entry-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .options-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-left: 0.25rem;
+  }
+
+  .options-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .option-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .option-check input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }
+
+  .option-note {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 2.5rem;
+    margin-left: 1.5rem;
+  }
+
+  .option-note:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .btn-remove {
+    background: transparent;
+    border: 1px solid var(--btn-delete-border);
+    color: var(--btn-delete-text);
+    border-radius: 6px;
+    padding: 0.5rem 0.6rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: background 0.15s;
+  }
+
+  .btn-remove:hover {
+    background: var(--btn-delete-hover);
+  }
+
+  .btn-add-skill {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-top: 0.25rem;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .btn-add-skill:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.65rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: background 0.15s;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+</style>

@@ -1,0 +1,247 @@
+export interface Input {
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    roles: string[];
+    skills: { id: number; name: string; learning: boolean; learning_note: string; teaching: boolean; teaching_note: string; doing: boolean; doing_note: string }[];
+  };
+  isAdmin: boolean;
+}
+
+<const/tr=($global as any).translations ?? {}>
+<const/t=(key: string, params?: Record<string, string>): string => {
+  const dot = key.indexOf(".");
+  const s = key.slice(0, dot);
+  const k = key.slice(dot + 1);
+  let v: string = (tr[s] as Record<string, string>)?.[k] ?? key;
+  if (params) for (const [p, r] of Object.entries(params)) v = v.replaceAll(`{${p}}`, r);
+  return v;
+}>
+
+<const/user=input.user>
+<const/isAdmin=input.isAdmin>
+
+<div class="user-card">
+  <div class="user-meta">
+    <h3>${user.name}</h3>
+    <span class="email">${user.email}</span>
+    <div class="role-badges">
+      <for|role| of=user.roles>
+        <span class=`role-badge role-${role}`>${role}</span>
+      </for>
+    </div>
+  </div>
+
+  <div class="skills">
+    <if=user.skills.length>
+      <for|skill| of=user.skills>
+        <div class="activity-item">
+          <span class="activity-name">${skill.name}</span>
+          <if=skill.learning || skill.teaching || skill.doing>
+            <div class="activity-opts">
+              <if=skill.learning><span class="opt-tag">${t("skills.learning")}</span></if>
+              <if=skill.teaching><span class="opt-tag">${t("skills.teaching")}</span></if>
+              <if=skill.doing><span class="opt-tag">${t("skills.doing")}</span></if>
+            </div>
+          </if>
+        </div>
+      </for>
+    </if>
+    <else>
+      <span class="no-skills">${t("card.noSkills")}</span>
+    </else>
+  </div>
+
+  <if=isAdmin>
+    <div class="admin-actions">
+      <if=user.roles.includes("admin")>
+        <button
+          class="btn-role btn-demote"
+          onClick() {
+            if (confirm(t("card.confirmRemoveAdmin", { name: user.name }))) {
+              fetch(`/api/users/${user.id}/roles`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "remove", role: "admin" }),
+              }).then((r) => r.json()).then((d: any) => {
+                if (d.error) alert(d.error);
+                else window.location.reload();
+              });
+            }
+          }
+        >
+          ${t("card.removeAdmin")}
+        </button>
+      </if>
+      <else>
+        <button
+          class="btn-role btn-promote"
+          onClick() {
+            if (confirm(t("card.confirmMakeAdmin", { name: user.name }))) {
+              fetch(`/api/users/${user.id}/roles`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "add", role: "admin" }),
+              }).then((r) => r.json()).then((d: any) => {
+                if (d.error) alert(d.error);
+                else window.location.reload();
+              });
+            }
+          }
+        >
+          ${t("card.makeAdmin")}
+        </button>
+      </else>
+
+      <button
+        class="btn-delete"
+        onClick() {
+          if (confirm(t("card.confirmDelete", { name: user.name }))) {
+            fetch(`/api/users/${user.id}`, { method: "DELETE" })
+              .then(() => window.location.reload());
+          }
+        }
+      >
+        ${t("card.delete")}
+      </button>
+    </div>
+  </if>
+</div>
+
+<style>
+  .user-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .user-meta h3 {
+    margin: 0 0 0.15rem;
+    font-size: 1.05rem;
+    color: var(--text);
+  }
+
+  .email {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+  }
+
+  .role-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.4rem;
+  }
+
+  .role-badge {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .role-standard {
+    background: var(--role-std-bg);
+    color: var(--role-std-text);
+    border: 1px solid var(--role-std-border);
+  }
+
+  .role-admin {
+    background: var(--role-adm-bg);
+    color: var(--role-adm-text);
+    border: 1px solid var(--role-adm-border);
+  }
+
+  .skills {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-height: 1.5rem;
+  }
+
+  .activity-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .activity-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .activity-opts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .opt-tag {
+    display: inline-block;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 999px;
+    padding: 0.05rem 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+  }
+
+  .no-skills {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .admin-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .btn-role, .btn-delete {
+    background: transparent;
+    border-radius: 6px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    border: 1px solid;
+    transition: background 0.15s;
+  }
+
+  .btn-promote {
+    border-color: var(--btn-promote-border);
+    color: var(--btn-promote-text);
+  }
+
+  .btn-promote:hover {
+    background: var(--btn-promote-hover);
+  }
+
+  .btn-demote {
+    border-color: var(--btn-demote-border);
+    color: var(--btn-demote-text);
+  }
+
+  .btn-demote:hover {
+    background: var(--btn-demote-hover);
+  }
+
+  .btn-delete {
+    border-color: var(--btn-delete-border);
+    color: var(--btn-delete-text);
+  }
+
+  .btn-delete:hover {
+    background: var(--btn-delete-hover);
+  }
+</style>

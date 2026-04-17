@@ -1,0 +1,120 @@
+<let/visible=false>
+
+<lifecycle
+  onMount() {
+    visible = localStorage.getItem("kc-motif") === "plant";
+    const handler = (e: Event) => {
+      visible = (e as CustomEvent<{ motif: string }>).detail.motif === "plant";
+    };
+    window.addEventListener("kc-motif-change", handler, { signal: $signal });
+  }
+/>
+
+<if=visible>
+  <div class="plant-motif" aria-hidden="true">
+
+    <!-- Top-left botanical cluster -->
+    <svg class="corner corner-tl" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+      <!-- Stem curving from corner into frame -->
+      <path class="stem" d="M -10 -10 C 30 40, 60 70, 90 160" fill="none" stroke-width="1.5" stroke-linecap="round"/>
+      <path class="stem stem-2" d="M -10 -10 C 50 20, 90 40, 160 80" fill="none" stroke-width="1" stroke-linecap="round"/>
+
+      <!-- Leaves along the main stem, at increasing distances -->
+      <!-- Leaf 1 - near corner, tilted far left -->
+      <g transform="translate(18, 28) rotate(-70)">
+        <path class="leaf leaf-1" d="M 0 4 C -9 -4 -9 -38 0 -52 C 9 -38 9 -4 0 4"/>
+      </g>
+      <!-- Leaf 2 -->
+      <g transform="translate(36, 52) rotate(-45)">
+        <path class="leaf leaf-2" d="M 0 4 C -11 -6 -11 -46 0 -60 C 11 -46 11 -6 0 4"/>
+      </g>
+      <!-- Leaf 3 -->
+      <g transform="translate(55, 82) rotate(-20)">
+        <path class="leaf leaf-3" d="M 0 4 C -8 -4 -8 -32 0 -42 C 8 -32 8 -4 0 4"/>
+      </g>
+      <!-- Leaf 4 - along horizontal stem -->
+      <g transform="translate(80, 48) rotate(10)">
+        <path class="leaf leaf-1" d="M 0 4 C -10 -5 -10 -42 0 -54 C 10 -42 10 -5 0 4"/>
+      </g>
+      <!-- Leaf 5 -->
+      <g transform="translate(118, 66) rotate(30)">
+        <path class="leaf leaf-2" d="M 0 3 C -7 -3 -7 -28 0 -36 C 7 -28 7 -3 0 3"/>
+      </g>
+      <!-- Leaf 6 - small accent -->
+      <g transform="translate(68, 110) rotate(-10)">
+        <path class="leaf leaf-3" d="M 0 3 C -6 -3 -6 -24 0 -31 C 6 -24 6 -3 0 3"/>
+      </g>
+    </svg>
+
+    <!-- Bottom-right botanical cluster -->
+    <svg class="corner corner-br" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+      <!-- Stems from bottom-right corner going into frame -->
+      <path class="stem" d="M 230 230 C 190 180, 160 150, 130 60" fill="none" stroke-width="1.5" stroke-linecap="round"/>
+      <path class="stem stem-2" d="M 230 230 C 180 200, 140 180, 60 140" fill="none" stroke-width="1" stroke-linecap="round"/>
+
+      <!-- Leaves mirrored from corner -->
+      <g transform="translate(202, 192) rotate(110)">
+        <path class="leaf leaf-1" d="M 0 4 C -9 -4 -9 -38 0 -52 C 9 -38 9 -4 0 4"/>
+      </g>
+      <g transform="translate(184, 168) rotate(135)">
+        <path class="leaf leaf-2" d="M 0 4 C -11 -6 -11 -46 0 -60 C 11 -46 11 -6 0 4"/>
+      </g>
+      <g transform="translate(165, 138) rotate(160)">
+        <path class="leaf leaf-3" d="M 0 4 C -8 -4 -8 -32 0 -42 C 8 -32 8 -4 0 4"/>
+      </g>
+      <g transform="translate(140, 172) rotate(170)">
+        <path class="leaf leaf-1" d="M 0 4 C -10 -5 -10 -42 0 -54 C 10 -42 10 -5 0 4"/>
+      </g>
+      <g transform="translate(102, 154) rotate(-150)">
+        <path class="leaf leaf-2" d="M 0 3 C -7 -3 -7 -28 0 -36 C 7 -28 7 -3 0 3"/>
+      </g>
+      <g transform="translate(152, 110) rotate(150)">
+        <path class="leaf leaf-3" d="M 0 3 C -6 -3 -6 -24 0 -31 C 6 -24 6 -3 0 3"/>
+      </g>
+    </svg>
+
+  </div>
+</if>
+
+<style>
+  .plant-motif {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .corner {
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    opacity: var(--plant-opacity, 0.5);
+  }
+
+  .corner-tl {
+    top: 0;
+    left: 0;
+  }
+
+  .corner-br {
+    bottom: 0;
+    right: 0;
+  }
+
+  .leaf {
+    fill-rule: evenodd;
+  }
+
+  .leaf-1 { fill: var(--plant-leaf-1); }
+  .leaf-2 { fill: var(--plant-leaf-2); }
+  .leaf-3 { fill: var(--plant-leaf-3); }
+
+  .stem {
+    stroke: var(--plant-stem);
+  }
+
+  .stem-2 {
+    stroke: var(--plant-stem);
+    opacity: 0.6;
+  }
+</style>
